@@ -89,7 +89,11 @@ class TransferList extends Component {
         {isFolded === false ? (
           <List>
             <List.Item>
-              <Table>
+              <Table
+                compact="very"
+                size="small"
+                unstackable
+              >
                 <Table.Header>
                   <Table.Row>
                     <Table.HeaderCell className="transferlist-selector">
@@ -148,10 +152,10 @@ class TransferList extends Component {
                         <Table.Cell className="transferlist-progress">
                           {f.state === 'InProgress' ? (
                             <Progress
+                              className="transferlist-progress-bar"
                               color={getColor(f.state).color}
                               percent={Math.round(f.percentComplete)}
                               progress
-                              style={{ margin: 0 }}
                             />
                           ) : (
                             <Button
@@ -160,7 +164,7 @@ class TransferList extends Component {
                               style={{
                                 cursor: f.direction === 'Upload' ? 'unset' : '',
                                 margin: 0,
-                                padding: 7,
+                                padding: 5,
                               }}
                               {...getColor(f.state)}
                               {...(!getColor(f.state).color && f.attempts > 1

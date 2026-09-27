@@ -27,7 +27,7 @@ const pictureMimeTypes = [
   ['Qk', 'image/bmp'],
 ];
 
-const toPictureUrl = (base64) => {
+export const toPictureUrl = (base64) => {
   const mime =
     pictureMimeTypes.find(([prefix]) => base64.startsWith(prefix))?.[1] ??
     'image';
@@ -73,6 +73,16 @@ const useUserProfile = ({ isSelf, refreshKey, username }) => {
       }
     };
 
+    // the country comes from the server's GeoIP lookup of the user's address,
+    // so it doesn't need a peer connection either
+    const loadCountry = async () => {
+      try {
+        update({ country: await users.getCountry({ username }) });
+      } catch {
+        // no flag is fine
+      }
+    };
+
     const load = async () => {
       const [status, statistics, group] = await Promise.allSettled([
         users.getStatus({ username }),
@@ -88,6 +98,10 @@ const useUserProfile = ({ isSelf, refreshKey, username }) => {
         presence,
         statistics: statistics.value?.data,
       });
+
+      if (presence !== 'Offline' && group.value !== 'blacklisted') {
+        loadCountry();
+      }
 
       if (isSelf) {
         try {

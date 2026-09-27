@@ -1698,6 +1698,16 @@ namespace slskd
                     return null;
                 }
 
+                // the share cache has no tables until shares are loaded or scanned, which never happens with
+                // --no-share-scan or after loading fails, and every search would log a SQLite error. while a scan
+                // is running, or after one fails part way, the cache still holds files, so keep answering then.
+                var shareState = Shares.StateMonitor.CurrentValue;
+
+                if (!shareState.Ready && !shareState.Scanning && !shareState.Faulted && !shareState.Cancelled)
+                {
+                    return null;
+                }
+
                 if (CompiledSearchRequestFilters.Any(filter => filter.IsMatch(query.SearchText)))
                 {
                     return null;

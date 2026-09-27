@@ -32,8 +32,10 @@
 
 namespace slskd.Users
 {
+    using System;
     using System.Collections.Generic;
     using System.Net;
+    using System.Threading;
     using System.Threading.Tasks;
 
     /// <summary>
@@ -95,8 +97,23 @@ namespace slskd.Users
         ///     Retrieves peer <see cref="Info"/>.
         /// </summary>
         /// <param name="username">The username of the peer.</param>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>The retrieved info.</returns>
-        Task<Info> GetInfoAsync(string username);
+        Task<Info> GetInfoAsync(string username, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        ///     Retrieves peer <see cref="Info"/>, answering from a short-lived cache when the peer was asked recently, and
+        ///     giving up after <paramref name="timeout"/>.
+        /// </summary>
+        /// <remarks>
+        ///     Failures are remembered too, so that a list of users doesn't wait on the same unreachable peer again and again.
+        /// </remarks>
+        /// <param name="username">The username of the peer.</param>
+        /// <param name="timeout">How long to wait for the peer.</param>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+        /// <returns>The retrieved info.</returns>
+        /// <exception cref="TimeoutException">Thrown when the peer doesn't answer within <paramref name="timeout"/>.</exception>
+        Task<Info> GetCachedInfoAsync(string username, TimeSpan timeout, CancellationToken cancellationToken = default);
 
         /// <summary>
         ///     Retrieves a peer's IP endpoint, including their IP address and listen port.

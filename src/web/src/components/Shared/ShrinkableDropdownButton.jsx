@@ -13,13 +13,17 @@ const ShrinkableDropdownButton = ({
   onChange,
   onClick,
   options,
+  size,
 }) => {
   if (hidden) {
     return null;
   }
 
   return (
-    <Button.Group color={color}>
+    <Button.Group
+      color={color}
+      size={size}
+    >
       <ShrinkableButton
         disabled={disabled}
         icon={icon}

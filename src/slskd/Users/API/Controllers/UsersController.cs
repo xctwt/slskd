@@ -43,6 +43,7 @@ namespace slskd.Users.API
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
     using Serilog;
+    using slskd.Integrations.GeoIP;
     using slskd.Interests;
     using Soulseek;
 
@@ -63,9 +64,11 @@ namespace slskd.Users.API
         /// <param name="browseTracker"></param>
         /// <param name="userService"></param>
         /// <param name="interestService"></param>
+        /// <param name="countryService"></param>
         /// <param name="optionsSnapshot"></param>
-        public UsersController(ISoulseekClient soulseekClient, IBrowseTracker browseTracker, IUserService userService, IInterestService interestService, IOptionsSnapshot<Options> optionsSnapshot)
+        public UsersController(ISoulseekClient soulseekClient, IBrowseTracker browseTracker, IUserService userService, IInterestService interestService, ICountryService countryService, IOptionsSnapshot<Options> optionsSnapshot)
         {
+            Countries = countryService;
             Client = soulseekClient;
             BrowseTracker = browseTracker;
             Users = userService;
@@ -73,7 +76,10 @@ namespace slskd.Users.API
             OptionsSnapshot = optionsSnapshot;
         }
 
+        private static TimeSpan CachedInfoTimeout { get; } = TimeSpan.FromSeconds(8);
+
         private IBrowseTracker BrowseTracker { get; }
+        private ICountryService Countries { get; }
         private IInterestService Interests { get; }
         private ISoulseekClient Client { get; }
         private IUserService Users { get; }
@@ -114,6 +120,42 @@ namespace slskd.Users.API
         }
 
         /// <summary>
+        ///     Retrieves the code of the country the specified <paramref name="username"/>'s IP address is registered in.
+        /// </summary>
+        /// <param name="username">The username of the user.</param>
+        /// <returns></returns>
+        /// <response code="200">The ISO 3166-1 alpha-2 country code.</response>
+        /// <response code="204">The country isn't known, or GeoIP lookups are disabled.</response>
+        [HttpGet("{username}/country")]
+        [Authorize(Policy = AuthPolicy.Any)]
+        [ProducesResponseType(typeof(string), 200)]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> Country([FromRoute, UrlEncoded, Required] string username)
+        {
+            if (Program.IsRelayAgent)
+            {
+                return Forbid();
+            }
+
+            if (Users.IsBlacklisted(username))
+            {
+                return NotFound();
+            }
+
+            try
+            {
+                var endpoint = await Users.GetIPEndPointAsync(username);
+                var code = await Countries.GetCountryCodeAsync(endpoint?.Address, HttpContext.RequestAborted);
+                return code is null ? NoContent() : Ok(code);
+            }
+            catch (UserOfflineException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+
+        /// <summary>
         ///     Retrieves the files shared by the specified <paramref name="username"/>.
         /// </summary>
         /// <param name="username">The username of the user.</param>
@@ -122,6 +164,7 @@ namespace slskd.Users.API
         [Authorize(Policy = AuthPolicy.Any)]
         [ProducesResponseType(typeof(IEnumerable<Directory>), 200)]
         [ProducesResponseType(404)]
+        [ProducesResponseType(typeof(string), 503)]
         public async Task<IActionResult> Browse([FromRoute, UrlEncoded, Required] string username)
         {
             if (Program.IsRelayAgent)
@@ -149,6 +192,12 @@ namespace slskd.Users.API
             catch (UserOfflineException ex)
             {
                 return NotFound(ex.Message);
+            }
+            catch (Exception ex) when (ex is SoulseekClientException or TimeoutException)
+            {
+                // peers are often unreachable, which isn't a server fault
+                Log.Debug("Failed to browse {Username}: {Message}", username, ex.Message);
+                return StatusCode(503, ex.Message);
             }
         }
 
@@ -186,6 +235,7 @@ namespace slskd.Users.API
         [Authorize(Policy = AuthPolicy.Any)]
         [ProducesResponseType(typeof(IEnumerable<Directory>), 200)]
         [ProducesResponseType(404)]
+        [ProducesResponseType(typeof(string), 503)]
         public async Task<IActionResult> Directory([FromRoute, UrlEncoded, Required] string username, [FromBody, Required] DirectoryContentsRequest request)
         {
             if (Program.IsRelayAgent)
@@ -215,18 +265,29 @@ namespace slskd.Users.API
             {
                 return NotFound(ex.Message);
             }
+            catch (Exception ex) when (ex is SoulseekClientException or TimeoutException)
+            {
+                // peers are often unreachable, which isn't a server fault
+                Log.Debug("Failed to get directory contents from {Username}: {Message}", username, ex.Message);
+                return StatusCode(503, ex.Message);
+            }
         }
 
         /// <summary>
         ///     Retrieves information about the specified <paramref name="username"/>.
         /// </summary>
         /// <param name="username">The username of the user.</param>
+        /// <param name="cached">
+        ///     Whether an answer from the last few minutes will do, including a failure to reach the user. Cached requests
+        ///     give up after a few seconds, which suits lists of users.
+        /// </param>
         /// <returns></returns>
         [HttpGet("{username}/info")]
         [Authorize(Policy = AuthPolicy.Any)]
         [ProducesResponseType(typeof(Info), 200)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> Info([FromRoute, UrlEncoded, Required] string username)
+        [ProducesResponseType(typeof(string), 503)]
+        public async Task<IActionResult> Info([FromRoute, UrlEncoded, Required] string username, [FromQuery] bool cached = false)
         {
             if (Program.IsRelayAgent)
             {
@@ -240,12 +301,21 @@ namespace slskd.Users.API
 
             try
             {
-                var response = await Users.GetInfoAsync(username);
+                var response = cached
+                    ? await Users.GetCachedInfoAsync(username, CachedInfoTimeout, HttpContext.RequestAborted)
+                    : await Users.GetInfoAsync(username, HttpContext.RequestAborted);
+
                 return Ok(response);
             }
             catch (UserOfflineException ex)
             {
                 return NotFound(ex.Message);
+            }
+            catch (Exception ex) when (ex is SoulseekClientException or TimeoutException)
+            {
+                // peers are often unreachable, which isn't a server fault
+                Log.Debug("Failed to get info from {Username}: {Message}", username, ex.Message);
+                return StatusCode(503, ex.Message);
             }
         }
 

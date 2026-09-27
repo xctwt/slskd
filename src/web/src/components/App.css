@@ -161,9 +161,25 @@ body {
     }
 }
 
+/* on phones the file tables keep their rows and drop the least useful columns */
 @media only screen and (max-width: 767px) {
     .transferlist-progress {
-        width: 100%;
+        width: 130px;
+    }
+
+    .transferlist-size,
+    .filelist-attributes,
+    .filelist-length {
+        display: none;
+    }
+
+    .ui.table td.filelist-filename,
+    .ui.table td.transferlist-filename {
+        overflow-wrap: anywhere !important;
+    }
+
+    .filelist-size {
+        width: 75px;
     }
 }
 
@@ -335,4 +351,52 @@ body {
 :root.dark .ui.form textarea:focus {
     color: var(--smui-site-input-color);
     background: var(--smui-input-background);
+}
+
+/* semantic's basic buttons have near-black text and turn white on hover, so
+   uncoloured ones vanish on the dark theme */
+:root.dark .ui.basic.button:not(.inverted, .red, .orange, .yellow, .olive, .green, .teal, .blue, .violet, .purple, .pink, .brown, .grey, .black, .primary, .secondary, .positive, .negative),
+:root.dark .ui.basic.buttons:not(.inverted) .button {
+    color: var(--smui-site-body-text-color) !important;
+    background: transparent !important;
+    box-shadow: 0 0 0 1px var(--slskd-tertiary-border-color) inset !important;
+}
+
+:root.dark .ui.basic.button:not(.inverted, .red, .orange, .yellow, .olive, .green, .teal, .blue, .violet, .purple, .pink, .brown, .grey, .black, .primary, .secondary, .positive, .negative):hover,
+:root.dark .ui.basic.button:not(.inverted, .red, .orange, .yellow, .olive, .green, .teal, .blue, .violet, .purple, .pink, .brown, .grey, .black, .primary, .secondary, .positive, .negative):focus,
+:root.dark .ui.basic.button:not(.inverted, .red, .orange, .yellow, .olive, .green, .teal, .blue, .violet, .purple, .pink, .brown, .grey, .black, .primary, .secondary, .positive, .negative):active,
+:root.dark .ui.basic.button.active:not(.inverted) {
+    color: var(--smui-site-body-text-color) !important;
+    background: var(--slskd-hover-background) !important;
+}
+
+/* basic labels have a white background by default */
+:root.dark .ui.basic.label:not(.red, .orange, .yellow, .olive, .green, .teal, .blue, .violet, .purple, .pink, .brown, .grey, .black) {
+    color: var(--smui-site-body-text-color);
+    background: transparent;
+    border-color: var(--slskd-tertiary-border-color);
+}
+
+/* coloured basic labels are white-backed by default */
+:root.dark .ui.basic.label:is(.red, .orange, .yellow, .olive, .green, .teal, .blue, .violet, .purple, .pink, .brown, .grey, .black) {
+    background: transparent !important;
+}
+
+/* tab panes and their tabs keep semantic's light grey border */
+:root.dark .ui.attached.segment,
+:root.dark .ui.tabular.menu,
+:root.dark .ui.tabular.menu .active.item {
+    border-color: var(--slskd-tertiary-border-color) !important;
+}
+
+/* a progress bar's empty track is nearly transparent black, invisible on the dark theme */
+:root.dark .ui.progress {
+    background: var(--slskd-tertiary-background);
+}
+
+/* semantic hardcodes black for disabled checkbox labels */
+:root.dark .ui.disabled.checkbox label,
+:root.dark .ui.checkbox input[disabled] ~ label {
+    color: var(--slskd-color-subtle) !important;
+    opacity: 0.8;
 }

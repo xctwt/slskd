@@ -47,7 +47,7 @@ const FileList = ({
       {!folded && files && files.length > 0 && (
         <List>
           <List.Item>
-            <Table>
+            <Table unstackable>
               <Table.Header>
                 <Table.Row>
                   <Table.HeaderCell className="filelist-selector">

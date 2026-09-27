@@ -2,6 +2,7 @@ import { urlBase } from '../../config';
 import * as interests from '../../lib/interests';
 import AppContext from '../AppContext';
 import InterestList from './InterestList';
+import UserCard from './UserCard';
 import { getErrorMessage } from './UserProfile';
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Link, useHistory, useLocation } from 'react-router-dom';
@@ -86,6 +87,7 @@ const recommendationLimit = 40;
 
 const UserList = ({ empty, selfUsername, usernames }) => {
   const history = useHistory();
+  const { options = {} } = useContext(AppContext) ?? {};
   const [expanded, setExpanded] = useState(false);
 
   if (usernames.length === 0) {
@@ -99,17 +101,12 @@ const UserList = ({ empty, selfUsername, usernames }) => {
       <ul className="interests-users">
         {shown.map((username) => (
           <li key={username}>
-            <button
-              onClick={() => history.push(userPath(username))}
-              title={`Open ${username}'s profile`}
-              type="button"
-            >
-              <Icon name="user outline" />
-              {username}
-              {username === selfUsername && (
-                <span className="user-profile-muted"> (you)</span>
-              )}
-            </button>
+            <UserCard
+              description={options.soulseek?.description}
+              isSelf={username === selfUsername}
+              onOpen={() => history.push(userPath(username))}
+              username={username}
+            />
           </li>
         ))}
       </ul>

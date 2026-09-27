@@ -73,10 +73,12 @@ class Logs extends Component {
               </Table.Row>
             </Table.Header>
             <Table.Body className="logs-table-body">
-              {logs.map((log) => (
+              {logs.map((log, index) => (
                 <Table.Row
                   disabled={log.level === 'Debug'}
-                  key={log.timestamp}
+                  // several entries can share a timestamp
+                  // eslint-disable-next-line react/no-array-index-key
+                  key={`${log.timestamp}-${index}`}
                   negative={log.level === 'Error'}
                   warning={log.level === 'Warning'}
                 >

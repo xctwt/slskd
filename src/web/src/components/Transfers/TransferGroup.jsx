@@ -1,15 +1,17 @@
 import * as transfers from '../../lib/transfers';
+import { summarize } from '../../lib/transferView';
+import { formatBytes } from '../../lib/util';
 import UserLink from '../Shared/UserLink';
 import TransferList from './TransferList';
+import TransferStatusBar from './TransferStatusBar';
 import React, { Component } from 'react';
-import { Button, Card, Icon } from 'semantic-ui-react';
+import { Button, Icon } from 'semantic-ui-react';
 
 class TransferGroup extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      isFolded: false,
       selections: new Set(),
     };
   }
@@ -103,13 +105,9 @@ class TransferGroup extends Component {
     }
   };
 
-  toggleFolded = () => {
-    this.setState((previousState) => ({ isFolded: !previousState.isFolded }));
-  };
-
   render() {
-    const { direction, user } = this.props;
-    const { isFolded } = this.state;
+    const { direction, expanded, onToggle, user } = this.props;
+    const summary = summarize(user);
 
     const selected = this.getSelectedFiles();
     const all = selected.length > 1 ? ' Selected' : '';
@@ -125,25 +123,45 @@ class TransferGroup extends Component {
       selected.length;
 
     return (
-      <Card
-        className="transfer-card"
-        key={user.username}
-        raised
-      >
-        <Card.Content>
-          <Card.Header>
+      <div className={`transfer-user ${expanded ? 'expanded' : ''}`}>
+        {/* the whole row toggles, for mouse users; the chevron button is the keyboard control */}
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+        <div
+          className="transfer-user-row"
+          onClick={onToggle}
+        >
+          <button
+            aria-expanded={expanded}
+            aria-label={`${expanded ? 'Hide' : 'Show'} ${user.username}'s files`}
+            className="transfer-user-toggle"
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggle();
+            }}
+            type="button"
+          >
             <Icon
-              link
-              name={isFolded ? 'chevron right' : 'chevron down'}
-              onClick={() => this.toggleFolded()}
+              fitted
+              name={expanded ? 'chevron down' : 'chevron right'}
             />
+          </button>
+          <span className="transfer-user-name">
             <UserLink username={user.username} />
-          </Card.Header>
-          {user.directories &&
-            !isFolded &&
-            user.directories.map((directory) => (
+          </span>
+          <TransferStatusBar
+            counts={summary.counts}
+            progress={summary.progress}
+          />
+          <span className="transfer-user-size">
+            {formatBytes(summary.transferred, 1)} /{' '}
+            {formatBytes(summary.size, 1)}
+          </span>
+        </div>
+        {expanded && (
+          <div className="transfer-user-files">
+            {(user.directories ?? []).map((directory) => (
               <TransferList
-                direction={this.props.direction}
+                direction={direction}
                 directoryName={directory.directory}
                 files={(directory.files || []).map((f) => ({
                   ...f,
@@ -156,45 +174,46 @@ class TransferGroup extends Component {
                 username={user.username}
               />
             ))}
-        </Card.Content>
-        {selected && selected.length > 0 && (
-          <Card.Content extra>
-            <Button.Group>
-              {allRetryable && (
-                <Button
-                  color="green"
-                  content={`Retry${all}`}
-                  icon="redo"
-                  onClick={() => this.retryAll(selected)}
-                />
-              )}
-              {allRetryable && anyCancellable && <Button.Or />}
-              {anyCancellable && (
-                <Button
-                  color="red"
-                  content={`Cancel${all}`}
-                  icon="x"
-                  onClick={() =>
-                    this.cancelAll(direction, user.username, selected)
-                  }
-                />
-              )}
-              {(allRetryable || anyCancellable) && allRemovable && (
-                <Button.Or />
-              )}
-              {allRemovable && (
-                <Button
-                  content={`Remove${all}`}
-                  icon="trash alternate"
-                  onClick={() =>
-                    this.removeAll(direction, user.username, selected)
-                  }
-                />
-              )}
-            </Button.Group>
-          </Card.Content>
+            {selected.length > 0 && (
+              <div className="transfer-user-actions">
+                <Button.Group size="small">
+                  {allRetryable && (
+                    <Button
+                      color="green"
+                      content={`Retry${all}`}
+                      icon="redo"
+                      onClick={() => this.retryAll(selected)}
+                    />
+                  )}
+                  {allRetryable && anyCancellable && <Button.Or />}
+                  {anyCancellable && (
+                    <Button
+                      color="red"
+                      content={`Cancel${all}`}
+                      icon="x"
+                      onClick={() =>
+                        this.cancelAll(direction, user.username, selected)
+                      }
+                    />
+                  )}
+                  {(allRetryable || anyCancellable) && allRemovable && (
+                    <Button.Or />
+                  )}
+                  {allRemovable && (
+                    <Button
+                      content={`Remove${all}`}
+                      icon="trash alternate"
+                      onClick={() =>
+                        this.removeAll(direction, user.username, selected)
+                      }
+                    />
+                  )}
+                </Button.Group>
+              </div>
+            )}
+          </div>
         )}
-      </Card>
+      </div>
     );
   }
 }

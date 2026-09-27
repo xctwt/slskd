@@ -4,6 +4,7 @@ namespace slskd.Tests.Unit.Users
     using System.Collections.Generic;
     using System.IO;
     using System.Net;
+    using System.Threading;
     using System.Threading.Tasks;
     using AutoFixture.Xunit2;
     using Microsoft.Extensions.Caching.Memory;
@@ -416,6 +417,69 @@ namespace slskd.Tests.Unit.Users
                 clock.UtcNow = clock.UtcNow.AddMinutes(11);
 
                 Assert.False(cache.TryGetValue(username, out _));
+            }
+        }
+
+        public class GetCachedInfoAsync
+        {
+            [Fact]
+            public async Task Asks_The_Peer_Once_While_Cached()
+            {
+                var (service, mocks) = GetFixture();
+                mocks.SoulseekClient
+                    .Setup(c => c.GetUserInfoAsync("alice", It.IsAny<CancellationToken?>()))
+                    .ReturnsAsync(new UserInfo("hi", 1, 0, true));
+
+                var first = await service.GetCachedInfoAsync("alice", TimeSpan.FromSeconds(5));
+                var second = await service.GetCachedInfoAsync("alice", TimeSpan.FromSeconds(5));
+
+                Assert.Equal("hi", first.Description);
+                Assert.Equal("hi", second.Description);
+                mocks.SoulseekClient.Verify(c => c.GetUserInfoAsync("alice", It.IsAny<CancellationToken?>()), Times.Once);
+            }
+
+            [Fact]
+            public async Task Remembers_Unreachable_Peers()
+            {
+                var (service, mocks) = GetFixture();
+                mocks.SoulseekClient
+                    .Setup(c => c.GetUserInfoAsync("bob", It.IsAny<CancellationToken?>()))
+                    .ThrowsAsync(new SoulseekClientException("unreachable"));
+
+                await Assert.ThrowsAsync<SoulseekClientException>(() => service.GetCachedInfoAsync("bob", TimeSpan.FromSeconds(5)));
+                await Assert.ThrowsAsync<SoulseekClientException>(() => service.GetCachedInfoAsync("bob", TimeSpan.FromSeconds(5)));
+
+                mocks.SoulseekClient.Verify(c => c.GetUserInfoAsync("bob", It.IsAny<CancellationToken?>()), Times.Once);
+            }
+
+            [Fact]
+            public async Task Gives_Up_After_The_Timeout()
+            {
+                var (service, mocks) = GetFixture();
+                mocks.SoulseekClient
+                    .Setup(c => c.GetUserInfoAsync("carol", It.IsAny<CancellationToken?>()))
+                    .Returns(async (string _, CancellationToken? token) =>
+                    {
+                        await Task.Delay(Timeout.Infinite, token.Value);
+                        return new UserInfo("never", 1, 0, true);
+                    });
+
+                await Assert.ThrowsAsync<TimeoutException>(() => service.GetCachedInfoAsync("carol", TimeSpan.FromMilliseconds(50)));
+            }
+
+            [Fact]
+            public async Task Uses_A_Fresh_Answer_From_An_Uncached_Request()
+            {
+                var (service, mocks) = GetFixture();
+                mocks.SoulseekClient
+                    .Setup(c => c.GetUserInfoAsync("dave", It.IsAny<CancellationToken?>()))
+                    .ReturnsAsync(new UserInfo("fresh", 1, 0, true));
+
+                await service.GetInfoAsync("dave");
+                var cached = await service.GetCachedInfoAsync("dave", TimeSpan.FromSeconds(5));
+
+                Assert.Equal("fresh", cached.Description);
+                mocks.SoulseekClient.Verify(c => c.GetUserInfoAsync("dave", It.IsAny<CancellationToken?>()), Times.Once);
             }
         }
 

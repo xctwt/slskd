@@ -175,6 +175,16 @@ const Searches = ({ server } = {}) => {
     }
   };
 
+  const showingList = !connecting && !error && !searchId;
+
+  // focus the search box when the list appears. doing it on every render stole
+  // focus each time the list updated.
+  useEffect(() => {
+    if (showingList) {
+      inputRef?.current?.inputRef?.current?.focus();
+    }
+  }, [showingList]);
+
   if (connecting) {
     return <LoaderSegment />;
   }
@@ -205,8 +215,6 @@ const Searches = ({ server } = {}) => {
     // the id off of the url and force navigation back to the list
     history.replace(match.url.replace(`/${searchId}`, ''));
   }
-
-  inputRef?.current?.inputRef?.current.focus();
 
   return (
     <>
