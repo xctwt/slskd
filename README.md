@@ -51,6 +51,15 @@ The page needs `remote_configuration: true` in `slskd.yml`, the same as upstream
 - Every user has a profile page at `/users/<username>`, showing their status, statistics, group, description, picture and shared files. You can ban or unban them there, or gift them days of privileges.
 - Clicking a username anywhere (search results, transfers, chat, rooms) opens that user in a side panel without leaving the page.
 - Right-clicking a username opens a menu: **View Profile**, **Browse Files**, **Send Message…**, **Open in Users Tab** and **Copy Username**.
+- Profiles show a flag for the country the user's IP address is in. Countries come from DB-IP's free [IP to Country Lite](https://db-ip.com/db/download/ip-to-country-lite) database (CC BY 4.0), which is downloaded to `data/geoip/` on first use and again each month. Lookups never leave your machine. To turn this off:
+
+  ```yaml
+  integrations:
+    geoip:
+      disabled: true
+  ```
+
+- The **Interests** tab's people lists (**People who like …** and **People like you**) show each user's picture and description. They load a few at a time as the cards scroll into view, because each one needs a connection to that user.
 
 ### Searches
 
@@ -155,14 +164,14 @@ This fork uses the same application directory as upstream: the same `slskd.yml`,
    - **Upstream binaries under systemd:** run the update script from [Updating](#updating). It detects the install folder from your service and replaces only the binaries and web UI.
    - **Upstream Docker image:** build `slskd-qol` as described under [Docker](#docker). Stop the old container, then start a new one with the same volumes, ports and environment variables, but with `image: slskd-qol`.
    - **Upstream binaries started by hand:** stop slskd, extract the fork's build over the old folder (delete the old `wwwroot` folder first), and start it with the same `--app-dir`.
-3. **Optional:** set `remote_configuration: true` to use the Settings page, and add an `integrations.musicbrainz` section if the defaults don't suit you.
+3. **Optional:** set `remote_configuration: true` to use the Settings page, and add an `integrations.musicbrainz` or `integrations.geoip` section if the defaults don't suit you.
 4. Open the web UI and hard-refresh (Ctrl+F5). Your browser may still have the old UI cached.
 
 ### Going back to upstream
 
-1. Remove the `integrations.musicbrainz` section from `slskd.yml`, if you added one. Upstream slskd ignores it at startup, but its built-in config editor refuses to save a file containing keys it doesn't recognize.
+1. Remove the `integrations.musicbrainz` and `integrations.geoip` sections from `slskd.yml`, if you added them. Upstream slskd ignores it at startup, but its built-in config editor refuses to save a file containing keys it doesn't recognize.
 2. Reinstall upstream: extract an upstream [release](https://github.com/slskd/slskd/releases) over the install folder (delete `wwwroot` first), or switch the container back to `slskd/slskd`.
-3. `data/releases.json` (saved releases) is only used by this fork, so you can delete it. Uploaded profile pictures in `profile/` keep working if `soulseek.picture` points at one.
+3. `data/releases.json` (saved releases) is only used by this fork, so you can delete it, along with `data/geoip/`. Uploaded profile pictures in `profile/` keep working if `soulseek.picture` points at one.
 
 ## Features
 

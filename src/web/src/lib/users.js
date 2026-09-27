@@ -1,7 +1,11 @@
 import api from './api';
 
-export const getInfo = ({ username }) => {
-  return api.get(`/users/${encodeURIComponent(username)}/info`);
+// cached accepts an answer (or failure) from the last few minutes, and gives
+// up on users who don't answer within a few seconds; it suits lists of users
+export const getInfo = ({ username, cached = false }) => {
+  return api.get(`/users/${encodeURIComponent(username)}/info`, {
+    params: cached ? { cached } : undefined,
+  });
 };
 
 export const getStatus = ({ username }) => {
@@ -45,4 +49,13 @@ export const grantPrivileges = ({ username, days }) => {
 export const getInterests = async ({ username }) => {
   return (await api.get(`/users/${encodeURIComponent(username)}/interests`))
     .data;
+};
+
+// the uppercase ISO 3166-1 code of the country the user's IP address is in, or
+// undefined if it isn't known
+export const getCountry = async ({ username }) => {
+  return (
+    (await api.get(`/users/${encodeURIComponent(username)}/country`)).data ||
+    undefined
+  );
 };

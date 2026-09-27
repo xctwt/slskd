@@ -68,6 +68,7 @@ const TransfersHeader = ({
   removing = false,
   retrying = false,
   server = { isConnected: true },
+  toolbar,
   transfers,
 }) => {
   const [removeOption, setRemoveOption] = useState('Succeeded');
@@ -97,72 +98,80 @@ const TransfersHeader = ({
       className="transfers-header-segment"
       raised
     >
-      <div className="transfers-segment-icon">
-        <Icon
-          name={direction}
-          size="big"
-        />
+      <div className="transfers-header-row">
+        <div className="transfers-segment-icon">
+          <Icon
+            name={direction}
+            size="large"
+          />
+        </div>
+        <Div
+          className="transfers-header-buttons"
+          hidden={empty}
+        >
+          <ShrinkableDropdownButton
+            color="green"
+            disabled={working || empty || !server.isConnected}
+            hidden={direction === 'upload'}
+            icon="redo"
+            loading={retrying}
+            mediaQuery="(max-width: 715px)"
+            onChange={(_, data) => setRetryOption(data.value)}
+            onClick={() =>
+              onRetryAll(getRetryableFiles({ files, retryOption }))
+            }
+            options={[
+              { key: 'errored', text: 'Errored', value: 'Errored' },
+              { key: 'cancelled', text: 'Cancelled', value: 'Cancelled' },
+              { key: 'all', text: 'All', value: 'All' },
+            ]}
+            size="small"
+          >
+            {`Retry ${retryOption === 'All' ? retryOption : `All ${retryOption}`}`}
+          </ShrinkableDropdownButton>
+          <Nbsp />
+          <ShrinkableDropdownButton
+            color="red"
+            disabled={working || empty}
+            icon="x"
+            loading={cancelling}
+            mediaQuery="(max-width: 715px)"
+            onChange={(_, data) => setCancelOption(data.value)}
+            onClick={() =>
+              onCancelAll(getCancellableFiles({ cancelOption, files }))
+            }
+            options={[
+              { key: 'all', text: 'All', value: 'All' },
+              { key: 'queued', text: 'Queued', value: 'Queued' },
+              { key: 'inProgress', text: 'In Progress', value: 'In Progress' },
+            ]}
+            size="small"
+          >
+            {`Cancel ${cancelOption === 'All' ? cancelOption : `All ${cancelOption}`}`}
+          </ShrinkableDropdownButton>
+          <Nbsp />
+          <ShrinkableDropdownButton
+            disabled={working || empty}
+            icon="trash alternate"
+            loading={removing}
+            mediaQuery="(max-width: 715px)"
+            onChange={(_, data) => setRemoveOption(data.value)}
+            onClick={() =>
+              onRemoveAll(getRemovableFiles({ files, removeOption }))
+            }
+            options={[
+              { key: 'succeeded', text: 'Succeeded', value: 'Succeeded' },
+              { key: 'errored', text: 'Errored', value: 'Errored' },
+              { key: 'cancelled', text: 'Cancelled', value: 'Cancelled' },
+              { key: 'completed', text: 'Completed', value: 'Completed' },
+            ]}
+            size="small"
+          >
+            {`Remove All ${removeOption}`}
+          </ShrinkableDropdownButton>
+        </Div>
       </div>
-      <Div
-        className="transfers-header-buttons"
-        hidden={empty}
-      >
-        <ShrinkableDropdownButton
-          color="green"
-          disabled={working || empty || !server.isConnected}
-          hidden={direction === 'upload'}
-          icon="redo"
-          loading={retrying}
-          mediaQuery="(max-width: 715px)"
-          onChange={(_, data) => setRetryOption(data.value)}
-          onClick={() => onRetryAll(getRetryableFiles({ files, retryOption }))}
-          options={[
-            { key: 'errored', text: 'Errored', value: 'Errored' },
-            { key: 'cancelled', text: 'Cancelled', value: 'Cancelled' },
-            { key: 'all', text: 'All', value: 'All' },
-          ]}
-        >
-          {`Retry ${retryOption === 'All' ? retryOption : `All ${retryOption}`}`}
-        </ShrinkableDropdownButton>
-        <Nbsp />
-        <ShrinkableDropdownButton
-          color="red"
-          disabled={working || empty}
-          icon="x"
-          loading={cancelling}
-          mediaQuery="(max-width: 715px)"
-          onChange={(_, data) => setCancelOption(data.value)}
-          onClick={() =>
-            onCancelAll(getCancellableFiles({ cancelOption, files }))
-          }
-          options={[
-            { key: 'all', text: 'All', value: 'All' },
-            { key: 'queued', text: 'Queued', value: 'Queued' },
-            { key: 'inProgress', text: 'In Progress', value: 'In Progress' },
-          ]}
-        >
-          {`Cancel ${cancelOption === 'All' ? cancelOption : `All ${cancelOption}`}`}
-        </ShrinkableDropdownButton>
-        <Nbsp />
-        <ShrinkableDropdownButton
-          disabled={working || empty}
-          icon="trash alternate"
-          loading={removing}
-          mediaQuery="(max-width: 715px)"
-          onChange={(_, data) => setRemoveOption(data.value)}
-          onClick={() =>
-            onRemoveAll(getRemovableFiles({ files, removeOption }))
-          }
-          options={[
-            { key: 'succeeded', text: 'Succeeded', value: 'Succeeded' },
-            { key: 'errored', text: 'Errored', value: 'Errored' },
-            { key: 'cancelled', text: 'Cancelled', value: 'Cancelled' },
-            { key: 'completed', text: 'Completed', value: 'Completed' },
-          ]}
-        >
-          {`Remove All ${removeOption}`}
-        </ShrinkableDropdownButton>
-      </Div>
+      {toolbar}
     </Segment>
   );
 };

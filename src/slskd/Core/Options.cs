@@ -2443,6 +2443,26 @@ namespace slskd
             public MusicBrainzOptions MusicBrainz { get; init; } = new MusicBrainzOptions();
 
             /// <summary>
+            ///     Gets GeoIP options.
+            /// </summary>
+            [Validate]
+            public GeoIPOptions GeoIP { get; init; } = new GeoIPOptions();
+
+            /// <summary>
+            ///     GeoIP options.
+            /// </summary>
+            public class GeoIPOptions
+            {
+                /// <summary>
+                ///     Gets a value indicating whether users' countries are looked up from their IP addresses.
+                /// </summary>
+                [Argument(default, "no-geoip")]
+                [EnvironmentVariable("NO_GEOIP")]
+                [Description("do not download DB-IP's country database or show users' countries")]
+                public bool Disabled { get; init; } = false;
+            }
+
+            /// <summary>
             ///     MusicBrainz options.
             /// </summary>
             public class MusicBrainzOptions

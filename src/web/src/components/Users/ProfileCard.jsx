@@ -1,4 +1,5 @@
 import { formatSpeed } from '../../lib/util';
+import CountryFlag, { getCountryName } from './CountryFlag';
 import InterestList from './InterestList';
 import React, { useState } from 'react';
 import { Icon, Label, Loader, Modal, Popup } from 'semantic-ui-react';
@@ -160,6 +161,7 @@ const Interests = ({
 
 // the information another user would see in nicotine+'s user info tab
 const ProfileCard = ({
+  country,
   description,
   endpoint,
   group,
@@ -201,6 +203,7 @@ const ProfileCard = ({
           <div className="user-profile-name">
             <PresenceIcon presence={presence} />
             <span>{title ?? username}</span>
+            <CountryFlag code={country} />
             {isPrivileged && (
               <Popup
                 content="Privileged user"
@@ -225,6 +228,12 @@ const ProfileCard = ({
           </div>
           <dl className="user-profile-stats">
             <Stat label="Status">{presence ?? 'Unknown'}</Stat>
+            {country && (
+              <Stat label="Country">
+                <CountryFlag code={country} />
+                {getCountryName(country)}
+              </Stat>
+            )}
             <Stat label="Shared">
               {statistics
                 ? `${formatCount(statistics.fileCount)} files in ${formatCount(

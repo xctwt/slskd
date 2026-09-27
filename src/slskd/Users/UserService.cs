@@ -39,7 +39,9 @@ namespace slskd.Users
     using System.Collections.Generic;
     using System.Linq;
     using System.Net;
+    using System.Runtime.ExceptionServices;
     using System.Text.RegularExpressions;
+    using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.Extensions.Caching.Memory;
     using Microsoft.Extensions.Internal;
@@ -140,6 +142,10 @@ namespace slskd.Users
         /// </summary>
         public IReadOnlyList<string> WatchedUsernames => WatchedUsernamesDictionary.Keys.ToList().AsReadOnly();
 
+        // failures are remembered for less time than answers
+        private static TimeSpan InfoLifetime { get; } = TimeSpan.FromMinutes(15);
+        private static TimeSpan InfoFailureLifetime { get; } = TimeSpan.FromMinutes(5);
+
         private ISoulseekClient Client { get; }
         private string LastOptionsHash { get; set; }
         private string LastBlacklistOptionsHash { get; set; }
@@ -149,6 +155,9 @@ namespace slskd.Users
         private IReadOnlyCollection<Regex> CompiledBlacklistPatterns { get; set; } = [];
         private ISystemClock InjectedClock { get; }
         private MemoryCache BlacklistDecisionCache { get; }
+
+        // peer info, sized in bytes because pictures dominate it
+        private MemoryCache InfoCache { get; } = new MemoryCache(new MemoryCacheOptions { SizeLimit = 64 * 1024 * 1024 });
 
         /// <summary>
         ///     Gets or sets the internal cache of User data.
@@ -228,11 +237,55 @@ namespace slskd.Users
         ///     Retrieves peer <see cref="Info"/>.
         /// </summary>
         /// <param name="username">The username of the peer.</param>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>The retrieved info.</returns>
-        public async Task<Info> GetInfoAsync(string username)
+        public async Task<Info> GetInfoAsync(string username, CancellationToken cancellationToken = default)
         {
-            var soulseekUserInfo = await Client.GetUserInfoAsync(username);
-            return soulseekUserInfo.ToInfo();
+            var soulseekUserInfo = await Client.GetUserInfoAsync(username, cancellationToken);
+            var info = soulseekUserInfo.ToInfo();
+
+            CacheInfo(username, info, failure: null);
+            return info;
+        }
+
+        /// <summary>
+        ///     Retrieves peer <see cref="Info"/>, answering from a short-lived cache when the peer was asked recently, and
+        ///     giving up after <paramref name="timeout"/>.
+        /// </summary>
+        /// <param name="username">The username of the peer.</param>
+        /// <param name="timeout">How long to wait for the peer.</param>
+        /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+        /// <returns>The retrieved info.</returns>
+        public async Task<Info> GetCachedInfoAsync(string username, TimeSpan timeout, CancellationToken cancellationToken = default)
+        {
+            if (InfoCache.TryGetValue(username, out (Info Info, Exception Failure) cached))
+            {
+                if (cached.Failure is not null)
+                {
+                    ExceptionDispatchInfo.Throw(cached.Failure);
+                }
+
+                return cached.Info;
+            }
+
+            using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeoutSource.CancelAfter(timeout);
+
+            try
+            {
+                return await GetInfoAsync(username, timeoutSource.Token);
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                var failure = new TimeoutException($"{username} didn't answer within {timeout.TotalSeconds} seconds");
+                CacheInfo(username, info: null, failure);
+                throw failure;
+            }
+            catch (SoulseekClientException ex)
+            {
+                CacheInfo(username, info: null, ex);
+                throw;
+            }
         }
 
         /// <summary>
@@ -574,6 +627,15 @@ namespace slskd.Users
                 key: username,
                 addValue: new User() { Status = status },
                 updateValueFactory: (key, user) => user with { Username = username, Status = status });
+        }
+
+        private void CacheInfo(string username, Info info, Exception failure)
+        {
+            InfoCache.Set(username, (info, failure), new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = failure is null ? InfoLifetime : InfoFailureLifetime,
+                Size = 1024 + (info?.Picture?.Length ?? 0),
+            });
         }
     }
 }

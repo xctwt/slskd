@@ -56,3 +56,254 @@
   display: inline;
   margin-left: auto;
 }
+
+/* compact header: actions on top, tabs and sorting below */
+.transfers-header-segment.ui.segment {
+  height: auto !important;
+  padding: 0.75em 1em !important;
+  display: block;
+}
+
+.transfers-header-row {
+  display: flex;
+  align-items: center;
+  min-height: 2.5em;
+}
+
+.transfers-header-row .transfers-segment-icon {
+  padding: 0;
+  margin: 0;
+}
+
+.transfers-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5em 1em;
+  margin-top: 0.75em;
+}
+
+.transfers-tabs {
+  display: flex;
+  gap: 0.25em;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.transfers-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  flex-shrink: 0;
+  padding: 0.35em 0.75em;
+  border: 1px solid var(--slskd-tertiary-border-color, rgba(34, 36, 38, 0.15));
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.transfers-tab:hover {
+  background: var(--slskd-hover-background, rgba(0, 0, 0, 0.06));
+}
+
+.transfers-tab.active {
+  border-color: var(--smui-site-link-color, #2185d0);
+  box-shadow: inset 0 0 0 1px var(--smui-site-link-color, #2185d0);
+  font-weight: 700;
+}
+
+.transfers-tab:focus-visible {
+  outline: 2px solid var(--smui-site-link-color, #2185d0);
+  outline-offset: 1px;
+}
+
+.transfers-tab-count {
+  font-weight: 400;
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+}
+
+.transfers-sort {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  flex-shrink: 0;
+}
+
+.transfers-sort .ui.button {
+  margin: 0;
+}
+
+/* one row per user, files hidden until expanded */
+.transfer-users {
+  margin-top: 1em;
+  border: 1px solid var(--slskd-tertiary-border-color, rgba(34, 36, 38, 0.15));
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--slskd-secondary-background, #fff);
+}
+
+.transfer-user + .transfer-user {
+  border-top: 1px solid var(--slskd-tertiary-border-color, rgba(34, 36, 38, 0.15));
+}
+
+.transfer-user-row {
+  display: grid;
+  grid-template-columns: auto minmax(8em, 14em) minmax(10em, 1fr) auto;
+  align-items: center;
+  gap: 0.75em;
+  padding: 0.4em 0.75em;
+  cursor: pointer;
+}
+
+.transfer-user-row:hover {
+  background: var(--slskd-hover-background, rgba(0, 0, 0, 0.04));
+}
+
+.transfer-user-toggle {
+  padding: 0.25em;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.transfer-user-toggle:focus-visible {
+  outline: 2px solid var(--smui-site-link-color, #2185d0);
+  border-radius: 4px;
+}
+
+.transfer-user-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.transfer-user-size {
+  min-width: 9em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+.transfer-user-files {
+  padding: 0 0.75em 0.75em 2.5em;
+}
+
+.transfer-user-files .filelist-header.ui.header {
+  margin: 0.5em 0 0.25em;
+  font-size: 0.95em;
+}
+
+.transfer-user-files .ui.list {
+  margin: 0;
+}
+
+.transfer-user-files .ui.table {
+  margin: 0;
+}
+
+.transfer-user-actions {
+  margin-top: 0.5em;
+}
+
+.transfer-status {
+  position: relative;
+  display: flex;
+  height: 1.6em;
+  min-width: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--slskd-subtle-background, rgba(0, 0, 0, 0.06));
+}
+
+.transfer-status-segment {
+  flex-basis: 0;
+  min-width: 3px;
+}
+
+.transfer-status-succeeded {
+  background: #21ba45;
+}
+
+.transfer-status-active {
+  background: #2185d0;
+}
+
+.transfer-status-queued {
+  background: #767676;
+}
+
+.transfer-status-failed {
+  background: #db2828;
+}
+
+.transfer-status-cancelled {
+  background: #f2711c;
+}
+
+.transfer-status-label {
+  position: absolute;
+  inset: 0;
+  padding: 0 0.6em;
+  overflow: hidden;
+  color: #fff;
+  font-size: 0.85em;
+  font-weight: 700;
+  line-height: 1.9em;
+  text-align: center;
+  text-overflow: ellipsis;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+}
+
+@media only screen and (max-width: 600px) {
+  .transfer-user-row {
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .transfer-user-row .transfer-status {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .transfer-user-files {
+    padding-left: 0.75em;
+  }
+}
+
+/* the in-progress bar and the state buttons around it share one fixed height;
+   a button's natural height depends on font metrics, which vary by screen */
+.transferlist-progress .ui.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 24px;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.transferlist-progress .ui.progress.transferlist-progress-bar {
+  box-sizing: border-box;
+  height: 24px;
+  margin: 0;
+  border-radius: 4px;
+}
+
+.transferlist-progress .ui.progress.transferlist-progress-bar > .bar {
+  height: 100%;
+  min-width: 3em;
+  border-radius: 4px;
+}
+
+.transferlist-progress .ui.progress.transferlist-progress-bar > .bar > .progress {
+  font-size: 0.85em;
+}

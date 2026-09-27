@@ -231,8 +231,13 @@ class Browse extends Component {
       return;
     }
 
-    const response = await users.getBrowseStatus({ username });
-    this.setState({ browseStatus: response.data });
+    try {
+      const response = await users.getBrowseStatus({ username });
+      this.setState({ browseStatus: response.data });
+    } catch {
+      // the server has no progress to report until the user starts sending
+      // their shares, and answers 404 until then
+    }
   };
 
   selectDirectory = (directory) => {
