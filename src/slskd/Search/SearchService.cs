@@ -80,6 +80,14 @@ namespace slskd.Search
         Task<List<Search>> ListAsync(Expression<Func<Search, bool>> expression = null);
 
         /// <summary>
+        ///     Finds the first phrase in <paramref name="searchText"/> that the Soulseek server excludes from searches, usually
+        ///     at the request of a copyright holder. Peers don't answer searches containing one.
+        /// </summary>
+        /// <param name="searchText">The text of the search.</param>
+        /// <returns>The excluded phrase, or null if the text contains none.</returns>
+        string FindExcludedPhrase(string searchText);
+
+        /// <summary>
         ///     Updates the specified <paramref name="search"/>.
         /// </summary>
         /// <remark>
@@ -135,6 +143,9 @@ namespace slskd.Search
             OptionsMonitor = optionsMonitor;
             Client = soulseekClient;
             ContextFactory = contextFactory;
+
+            // the server sends the list after each login
+            Client.ExcludedSearchPhrasesReceived += (_, phrases) => ExcludedPhrases = phrases.ToList();
         }
 
         private ConcurrentDictionary<Guid, CancellationTokenSource> CancellationTokens { get; }
@@ -142,6 +153,7 @@ namespace slskd.Search
 
         private ISoulseekClient Client { get; }
         private IDbContextFactory<SearchDbContext> ContextFactory { get; }
+        private IReadOnlyList<string> ExcludedPhrases { get; set; } = [];
         private ILogger Log { get; set; } = Serilog.Log.ForContext<Application>();
         private IOptionsMonitor<Options> OptionsMonitor { get; }
         private IHubContext<SearchHub> SearchHub { get; set; }
@@ -213,6 +225,24 @@ namespace slskd.Search
                 .Where(expression)
                 .WithoutResponses()
                 .ToListAsync();
+        }
+
+        /// <summary>
+        ///     Finds the first phrase in <paramref name="searchText"/> that the Soulseek server excludes from searches, usually
+        ///     at the request of a copyright holder. Peers don't answer searches containing one.
+        /// </summary>
+        /// <param name="searchText">The text of the search.</param>
+        /// <returns>The excluded phrase, or null if the text contains none.</returns>
+        public string FindExcludedPhrase(string searchText)
+        {
+            if (string.IsNullOrWhiteSpace(searchText))
+            {
+                return null;
+            }
+
+            // matched the way peers match them: anywhere in the text, ignoring case
+            return ExcludedPhrases.FirstOrDefault(phrase =>
+                !string.IsNullOrWhiteSpace(phrase) && searchText.Contains(phrase, StringComparison.OrdinalIgnoreCase));
         }
 
         /// <summary>

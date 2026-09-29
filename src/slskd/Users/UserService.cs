@@ -157,7 +157,7 @@ namespace slskd.Users
         private MemoryCache BlacklistDecisionCache { get; }
 
         // peer info, sized in bytes because pictures dominate it
-        private MemoryCache InfoCache { get; } = new MemoryCache(new MemoryCacheOptions { SizeLimit = 64 * 1024 * 1024 });
+        private MemoryCache InfoCache { get; } = new MemoryCache(new MemoryCacheOptions { SizeLimit = 16 * 1024 * 1024 });
 
         /// <summary>
         ///     Gets or sets the internal cache of User data.

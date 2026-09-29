@@ -403,6 +403,15 @@ namespace slskd.Transfers.Downloads
                     .ToDictionary(t => t.Filename, t => t);
 
                 /*
+                    retries arrive without a batch. a file whose last unsuccessful attempt was part of one (e.g. queued from
+                    the release page, which names the destination folder) rejoins that batch, so that it lands in the same
+                    folder as the rest of it rather than wherever the configured subdirectory pattern puts it
+                */
+                var previousBatchIds = batchId is null
+                    ? FindPreviousBatchIds(context, username, fileList.Select(f => f.Filename))
+                    : [];
+
+                /*
                     determine how many concurrent enqueue requests we want to send to the remote client.
 
                     sending a ton of them can bog the client down and fail transfers due to resource contention on both sides,
@@ -478,7 +487,7 @@ namespace slskd.Transfers.Downloads
                         var transfer = new Transfer()
                         {
                             Id = transferId,
-                            BatchId = batchId,
+                            BatchId = batchId ?? (previousBatchIds.TryGetValue(file.Filename, out var previousBatchId) ? previousBatchId : null),
                             Username = username,
                             Direction = TransferDirection.Download,
                             Filename = file.Filename, // important! use the remote filename
@@ -1615,6 +1624,31 @@ namespace slskd.Transfers.Downloads
                     storedCancellationTokenSource?.Dispose();
                 }
             }
+        }
+
+        /// <summary>
+        ///     Finds the batch of the latest unsuccessful download of each of the specified <paramref name="filenames"/> from
+        ///     <paramref name="username"/>, for retries to rejoin.
+        /// </summary>
+        /// <param name="context">The database context to use.</param>
+        /// <param name="username">The username of the remote user.</param>
+        /// <param name="filenames">The remote filenames.</param>
+        /// <returns>The batch ids, keyed by filename; files that weren't part of a batch are left out.</returns>
+        public static Dictionary<string, Guid> FindPreviousBatchIds(TransfersDbContext context, string username, IEnumerable<string> filenames)
+        {
+            var filenameList = filenames.ToList();
+
+            return context.Transfers
+                .Where(t => t.Direction == TransferDirection.Download)
+                .Where(t => t.Username == username)
+                .Where(t => t.BatchId != null)
+                .Where(t => filenameList.Contains(t.Filename))
+                .AsNoTracking()
+                .Select(t => new { t.Filename, t.BatchId, t.RequestedAt, t.State })
+                .ToList()
+                .Where(t => !t.State.HasFlag(TransferStates.Succeeded))
+                .GroupBy(t => t.Filename)
+                .ToDictionary(g => g.Key, g => g.MaxBy(t => t.RequestedAt).BatchId.Value);
         }
 
         private void SynchronizedUpdate(Transfer transfer, SemaphoreSlim semaphore, CancellationToken cancellationToken = default)

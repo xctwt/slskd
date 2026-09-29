@@ -104,7 +104,8 @@ namespace slskd.Integrations.MusicBrainz
         /// </summary>
         public bool Enabled => !MusicBrainzOptions.Disabled;
 
-        private IMemoryCache Cache { get; } = new MemoryCache(new MemoryCacheOptions());
+        // counted in entries; a release with its track list is tens of kilobytes as a JsonNode
+        private IMemoryCache Cache { get; } = new MemoryCache(new MemoryCacheOptions { SizeLimit = 500 });
         private IHttpClientFactory HttpClientFactory { get; }
         private DateTime LastRequest { get; set; } = DateTime.MinValue;
         private ILogger<MusicBrainzService> Log { get; }
@@ -190,7 +191,7 @@ namespace slskd.Integrations.MusicBrainz
             var node = await GetAsync(new Uri($"{baseUrl}/{path}"), cancellationToken);
 
             // cache misses too, so a bad ID doesn't cost a request every time
-            Cache.Set(key, node, duration);
+            Cache.Set(key, node, new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = duration, Size = 1 });
             return node;
         }
 

@@ -16,6 +16,20 @@
     <_SkipUpgradeNetAnalyzersNuGetWarning>true</_SkipUpgradeNetAnalyzersNuGetWarning>
   </PropertyGroup>
 
+  <!--
+    the same GC settings the Docker image sets through DOTNET_* variables, so that bare installs (systemd, Windows)
+    get them too; the web SDK otherwise defaults to server GC, which is tuned for big machines and holds on to far more
+    memory than slskd needs. environment variables still take precedence, e.g. DOTNET_gcServer=1 to go back.
+  -->
+  <PropertyGroup>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="System.GC.ConserveMemory" Value="9" />
+  </ItemGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <NoWarn>1701;1702;1591;S1133;S2094;S1135;S3925;S125;IDE0290;IDE0130</NoWarn>
   </PropertyGroup>
