@@ -2,7 +2,7 @@
 // album folders, each folder's files are paired with the release's tracks, and the
 // folders are ranked by how much of the release they hold and how good the files are
 
-import { getExtension, isLosslessFile } from './searchFilters';
+import { getExtension, isLosslessFile, preferenceRank } from './searchFilters';
 
 export const audioExtensions = new Set([
   'aac',
@@ -373,21 +373,28 @@ const availability = [
   (candidate) => -(candidate.user.queueLength ?? 0),
 ];
 
+// members of the groups named with prefer: go first among folders that are otherwise as
+// complete, in the order the groups are listed
+const preferred = (candidate) => -candidate.user.preference;
+
 const comparers = {
   match: compareBy(
     completeness,
+    preferred,
     (candidate) => -candidate.extras.length,
     (candidate) => candidate.quality.rank,
     ...availability,
   ),
   quality: compareBy(
     (candidate) => (candidate.complete ? 1 : 0),
+    preferred,
     (candidate) => candidate.quality.rank,
     completeness,
     ...availability,
   ),
   speed: compareBy(
     (candidate) => (candidate.complete ? 1 : 0),
+    preferred,
     ...availability,
     completeness,
     (candidate) => candidate.quality.rank,
@@ -396,15 +403,19 @@ const comparers = {
 
 // groups search responses into album folders and ranks them against the release
 export const buildCandidates = ({
+  prefer = [],
   release,
   responses = [],
   sort = 'match',
+  userGroups = new Map(),
 }) => {
   const groups = new Map();
 
   for (const response of responses) {
     const user = {
       hasFreeUploadSlot: response.hasFreeUploadSlot,
+      groups: userGroups.get(response.username) ?? [],
+      preference: preferenceRank(prefer, userGroups.get(response.username)),
       queueLength: response.queueLength,
       uploadSpeed: response.uploadSpeed,
       username: response.username,

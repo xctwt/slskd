@@ -41,3 +41,14 @@ export const getResponses = async ({ id }) => {
 
 // deletes every finished search; searches still running are kept
 export const removeAll = async () => (await api.delete('/searches')).data;
+
+// the server silently drops searches for some artists after copyright
+// complaints, without telling clients which, so a search that ran its course
+// with nobody answering is the only sign of it
+export const isUnanswered = (search) =>
+  Boolean(search?.isComplete) &&
+  (search.responseCount ?? 0) === 0 &&
+  !/Cancelled|Errored/u.test(search.state ?? '');
+
+export const unansweredMessage =
+  'Nobody answered. The Soulseek server silently drops searches for some artists, usually after copyright complaints, and this looks like one. Try without the artist name, e.g. the album title and a track name.';

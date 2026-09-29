@@ -3,6 +3,7 @@ import '../UserPanel/UserPanel.css';
 import { activeUserInfoKey, urlBase } from '../../config';
 import AppContext from '../AppContext';
 import PlaceholderSegment from '../Shared/PlaceholderSegment';
+import Groups, { groupsPath } from './Groups';
 import Interests, { interestsPath } from './Interests';
 import UserView from './UserView';
 import React, { useContext, useEffect, useState } from 'react';
@@ -35,6 +36,8 @@ const Users = () => {
   const location = useLocation();
   const { username: active } = useParams();
   const interestsActive = Boolean(useRouteMatch(`${urlBase}/interests`));
+  const groupsActive = Boolean(useRouteMatch(`${urlBase}/groups`));
+  const pinnedActive = interestsActive || groupsActive;
   const { state = {} } = useContext(AppContext) ?? {};
   const selfUsername = state.user?.username;
 
@@ -50,7 +53,7 @@ const Users = () => {
 
     if (requested) {
       history.replace(userPath(requested));
-    } else if (!active && !interestsActive) {
+    } else if (!active && !pinnedActive) {
       const last = localStorage.getItem(activeUserInfoKey);
       const restore = tabs.includes(last) ? last : tabs[0];
 
@@ -58,7 +61,7 @@ const Users = () => {
         history.replace(userPath(restore));
       }
     }
-  }, [location.state, active, interestsActive]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [location.state, active, pinnedActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!active) {
@@ -167,6 +170,23 @@ const Users = () => {
             Interests
           </button>
         </div>
+        <div
+          className={`users-tab users-tab-pinned ${
+            groupsActive ? 'active' : ''
+          }`}
+        >
+          <button
+            aria-selected={groupsActive}
+            className="users-tab-name"
+            onClick={() => history.push(groupsPath())}
+            role="tab"
+            title="Your user groups, like buddies"
+            type="button"
+          >
+            <Icon name="users" />
+            Groups
+          </button>
+        </div>
         {tabs.map((username) => (
           <div
             className={`users-tab ${username === active ? 'active' : ''}`}
@@ -206,7 +226,7 @@ const Users = () => {
             onClick={() => {
               setTabs([]);
 
-              if (!interestsActive) {
+              if (!pinnedActive) {
                 history.replace(`${urlBase}/users`);
               }
             }}
@@ -216,12 +236,12 @@ const Users = () => {
           </button>
         )}
       </div>
-      {interestsActive ? (
+      {interestsActive || groupsActive ? (
         <Segment
           className="users-user"
           raised
         >
-          <Interests />
+          {interestsActive ? <Interests /> : <Groups />}
         </Segment>
       ) : active ? (
         <Segment

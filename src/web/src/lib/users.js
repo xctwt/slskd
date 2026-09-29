@@ -59,3 +59,23 @@ export const getCountry = async ({ username }) => {
     undefined
   );
 };
+
+// the user groups each user is in, by username: the groups defined in the config
+// (a group named "buddies", say), not built-in ones such as leechers
+export const groupsByUser = (options) => {
+  const groups = new Map();
+
+  for (const [name, group] of Object.entries(
+    options?.transfers?.groups?.userDefined ?? {},
+  )) {
+    for (const member of group?.members ?? []) {
+      groups.set(member, [...(groups.get(member) ?? []), name]);
+    }
+  }
+
+  return groups;
+};
+
+// the names of the user groups defined in the config
+export const userGroupNames = (options) =>
+  Object.keys(options?.transfers?.groups?.userDefined ?? {});

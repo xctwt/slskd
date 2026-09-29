@@ -288,6 +288,53 @@ describe('buildCandidates', () => {
   });
 });
 
+describe('buildCandidates preferred groups', () => {
+  const userGroups = new Map([
+    ['buddy-partial', ['Buddies']],
+    ['buddy-full', ['Buddies']],
+    ['friend-full', ['friends']],
+  ]);
+
+  const responses = [
+    response('stranger-full', complete('m\\SAW'), { uploadSpeed: 9_000_000 }),
+    response('buddy-partial', complete('m\\SAW').slice(0, 2)),
+    response('friend-full', complete('m\\SAW'), { uploadSpeed: 100 }),
+    response('buddy-full', complete('m\\SAW'), { uploadSpeed: 10 }),
+  ];
+
+  const order = (prefer) =>
+    buildCandidates({ prefer, release, responses, userGroups }).map(
+      (candidate) => candidate.user.username,
+    );
+
+  it('puts preferred groups first, in order, among folders as complete', () => {
+    expect(order(['buddies', 'friends'])).toEqual([
+      'buddy-full',
+      'friend-full',
+      'stranger-full',
+      'buddy-partial',
+    ]);
+    expect(order(['friends'])[0]).toBe('friend-full');
+  });
+
+  it('keeps the usual order without prefer, and lists groups either way', () => {
+    expect(order([])).toEqual([
+      'stranger-full',
+      'friend-full',
+      'buddy-full',
+      'buddy-partial',
+    ]);
+
+    const [first] = buildCandidates({ release, responses, userGroups });
+    expect(first.user.groups).toEqual([]);
+    expect(
+      buildCandidates({ release, responses, userGroups }).find(
+        (candidate) => candidate.user.username === 'buddy-full',
+      ).user.groups,
+    ).toEqual(['Buddies']);
+  });
+});
+
 describe('soulseekQuery', () => {
   it('uses the artist and title words', () => {
     expect(soulseekQuery(release)).toBe(

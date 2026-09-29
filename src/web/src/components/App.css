@@ -97,6 +97,12 @@
 
 }
 
+/* always keep room for the scrollbar, so the page doesn't shift sideways when content grows
+   long enough to scroll */
+html {
+    scrollbar-gutter: stable;
+}
+
 body {
     background-color: var(--background-color);
 }

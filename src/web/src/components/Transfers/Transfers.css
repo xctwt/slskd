@@ -77,47 +77,68 @@
 
 .transfers-toolbar {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-wrap: wrap-reverse;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 0.5em 1em;
-  margin-top: 0.75em;
+  margin-top: 1em;
+  padding: 0 0.5em 0 0;
+  border-bottom: var(--smui-segment-border, 1px solid rgba(34, 36, 38, 0.15));
 }
 
 .transfers-tabs {
   display: flex;
+  align-items: flex-end;
   gap: 0.25em;
   overflow-x: auto;
   scrollbar-width: thin;
 }
 
+/* folder tabs on the panel below, styled like the users page's: each overlaps the
+   toolbar's bottom line, and the active one takes the panel's background so it joins it */
 .transfers-tab {
   display: flex;
   align-items: center;
   gap: 0.4em;
   flex-shrink: 0;
-  padding: 0.35em 0.75em;
-  border: 1px solid var(--slskd-tertiary-border-color, rgba(34, 36, 38, 0.15));
-  border-radius: 999px;
-  background: none;
+  margin-bottom: -1px;
+  padding: 0.65em 1.25em;
+  border: var(--smui-segment-border, 1px solid rgba(34, 36, 38, 0.15));
+  border-radius: 4px 4px 0 0;
+  background: var(--slskd-secondary-background, #f3f4f5);
   color: inherit;
   font: inherit;
+  font-size: 1.05em;
   cursor: pointer;
+  opacity: 0.8;
 }
 
 .transfers-tab:hover {
-  background: var(--slskd-hover-background, rgba(0, 0, 0, 0.06));
+  opacity: 1;
 }
 
 .transfers-tab.active {
-  border-color: var(--smui-site-link-color, #2185d0);
-  box-shadow: inset 0 0 0 1px var(--smui-site-link-color, #2185d0);
-  font-weight: 700;
+  border-bottom-color: var(--smui-segment-background, #fff);
+  background: var(--smui-segment-background, #fff);
+  opacity: 1;
+}
+
+.transfers-panel {
+  padding: 1em;
+  border: var(--smui-segment-border, 1px solid rgba(34, 36, 38, 0.15));
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  background: var(--smui-segment-background, #fff);
+}
+
+.transfers-panel > .transfer-users,
+.transfers-panel > .ui.segment {
+  margin: 0 !important;
 }
 
 .transfers-tab:focus-visible {
   outline: 2px solid var(--smui-site-link-color, #2185d0);
-  outline-offset: 1px;
+  outline-offset: -2px;
 }
 
 .transfers-tab-count {
@@ -131,6 +152,7 @@
   align-items: center;
   gap: 0.5em;
   flex-shrink: 0;
+  margin-bottom: 0.35em;
 }
 
 .transfers-sort .ui.button {
@@ -141,7 +163,7 @@
 .transfer-users {
   margin-top: 1em;
   border: 1px solid var(--slskd-tertiary-border-color, rgba(34, 36, 38, 0.15));
-  border-radius: 6px;
+  border-radius: 4px;
   overflow: hidden;
   background: var(--slskd-secondary-background, #fff);
 }
@@ -152,7 +174,8 @@
 
 .transfer-user-row {
   display: grid;
-  grid-template-columns: auto minmax(8em, 14em) minmax(10em, 1fr) auto;
+  /* the size gets a fixed width, since each row is its own grid and a wider size would shorten that row's bar */
+  grid-template-columns: auto minmax(8em, 14em) minmax(10em, 1fr) 12em;
   align-items: center;
   gap: 0.75em;
   padding: 0.4em 0.75em;
@@ -186,7 +209,8 @@
 }
 
 .transfer-user-size {
-  min-width: 9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
   text-align: right;
   font-variant-numeric: tabular-nums;
   opacity: 0.75;

@@ -50,7 +50,7 @@ const useRequest = (request, deps) => {
 
 const byName = (a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' });
 
-const Section = ({ children, count, icon, title }) => (
+export const Section = ({ children, count, icon, title }) => (
   <section className="interests-section">
     <h3>
       <Icon name={icon} />
@@ -85,7 +85,7 @@ const userLimit = 60;
 // the server returns every related interest it knows, negatives included
 const recommendationLimit = 40;
 
-const UserList = ({ empty, selfUsername, usernames }) => {
+export const UserList = ({ empty, selfUsername, usernames }) => {
   const history = useHistory();
   const { options = {} } = useContext(AppContext) ?? {};
   const [expanded, setExpanded] = useState(false);

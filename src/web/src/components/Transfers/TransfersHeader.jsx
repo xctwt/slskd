@@ -68,7 +68,6 @@ const TransfersHeader = ({
   removing = false,
   retrying = false,
   server = { isConnected: true },
-  toolbar,
   transfers,
 }) => {
   const [removeOption, setRemoveOption] = useState('Succeeded');
@@ -171,7 +170,6 @@ const TransfersHeader = ({
           </ShrinkableDropdownButton>
         </Div>
       </div>
-      {toolbar}
     </Segment>
   );
 };

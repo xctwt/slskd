@@ -2,17 +2,28 @@ import {
   filterResponse,
   getDefaultFilter,
   getResponses,
+  isUnanswered,
   parseFiltersFromString,
+  preferenceRank,
+  unansweredMessage,
 } from '../../../lib/searches';
+import { groupsByUser } from '../../../lib/users';
 import { sleep } from '../../../lib/util';
+import AppContext from '../../AppContext';
 import ErrorSegment from '../../Shared/ErrorSegment';
 import LoaderSegment from '../../Shared/LoaderSegment';
 import Switch from '../../Shared/Switch';
 import SearchFilters from '../Filters/SearchFilters';
 import Response from '../Response';
 import SearchDetailHeader from './SearchDetailHeader';
-import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Checkbox, Dropdown, Segment } from 'semantic-ui-react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
+import {
+  Button,
+  Checkbox,
+  Dropdown,
+  Message,
+  Segment,
+} from 'semantic-ui-react';
 
 const sortDropdownOptions = [
   {
@@ -58,6 +69,9 @@ const SearchDetail = ({
   const [foldResults, setFoldResults] = useState(false);
   const [resultFilters, setResultFilters] = useState(getDefaultFilter);
   const [displayCount, setDisplayCount] = useState(5);
+
+  const { options } = useContext(AppContext) ?? {};
+  const userGroups = useMemo(() => groupsByUser(options), [options]);
 
   // when the search transitions from !isComplete -> isComplete,
   // fetch the results from the server
@@ -110,6 +124,14 @@ const SearchDetail = ({
       .filter((r) => r.fileCount + r.lockedFileCount > 0)
       .filter((r) => !(hideNoFreeSlots && !r.hasFreeUploadSlot))
       .sort((a, b) => {
+        // members of the groups named with prefer: first, whatever the sort
+        const preference =
+          preferenceRank(filters.prefer, userGroups.get(a.username)) -
+          preferenceRank(filters.prefer, userGroups.get(b.username));
+        if (preference !== 0) {
+          return preference;
+        }
+
         if (order === 'asc') {
           return a[field] - b[field];
         }
@@ -123,6 +145,7 @@ const SearchDetail = ({
     resultFilters,
     resultSort,
     results,
+    userGroups,
   ]);
 
   // when a user uses the action buttons, we will *probably* re-use this component,
@@ -229,10 +252,14 @@ const SearchDetail = ({
             />
           </Segment>
         )}
+        {loaded && isUnanswered(search) && (
+          <Message info>{unansweredMessage}</Message>
+        )}
         {loaded &&
           sortedAndFilteredResults.slice(0, displayCount).map((r) => (
             <Response
               disabled={disabled}
+              groups={userGroups.get(r.username)}
               isInitiallyFolded={foldResults}
               key={r.username}
               onHide={() => setHiddenResults([...hiddenResults, r.username])}

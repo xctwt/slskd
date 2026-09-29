@@ -647,6 +647,7 @@ class App extends Component {
                       <Route
                         path={[
                           `${urlBase}/interests`,
+                          `${urlBase}/groups`,
                           `${urlBase}/users/:username?`,
                         ]}
                         render={(props) =>

@@ -259,3 +259,47 @@ describe('parseFiltersFromString', () => {
     });
   });
 });
+
+describe('isUnanswered', () => {
+  it('is true for a search that ran its course with no responses', () => {
+    expect(
+      search.isUnanswered({
+        isComplete: true,
+        responseCount: 0,
+        state: 'Completed, TimedOut',
+      }),
+    ).toBe(true);
+  });
+
+  it('is false while running, when stopped or failed, or with responses', () => {
+    expect(
+      search.isUnanswered({
+        isComplete: false,
+        responseCount: 0,
+        state: 'InProgress',
+      }),
+    ).toBe(false);
+    expect(
+      search.isUnanswered({
+        isComplete: true,
+        responseCount: 0,
+        state: 'Completed, Cancelled',
+      }),
+    ).toBe(false);
+    expect(
+      search.isUnanswered({
+        isComplete: true,
+        responseCount: 0,
+        state: 'Completed, Errored',
+      }),
+    ).toBe(false);
+    expect(
+      search.isUnanswered({
+        isComplete: true,
+        responseCount: 3,
+        state: 'Completed, TimedOut',
+      }),
+    ).toBe(false);
+    expect(search.isUnanswered(undefined)).toBe(false);
+  });
+});

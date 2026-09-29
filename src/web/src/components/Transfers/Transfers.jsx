@@ -231,50 +231,52 @@ const Transfers = ({ direction, server }) => {
         removing={removing}
         retrying={retrying}
         server={server}
-        toolbar={
-          transfers.length > 0 && (
-            <TransfersToolbar
-              allExpanded={allExpanded}
-              counts={counts}
-              onSortChange={updateView}
-              onTabChange={(tab) => updateView({ tab })}
-              onToggleExpanded={toggleAll}
-              view={view}
-            />
-          )
-        }
         transfers={transfers}
       />
-      {shown.length === 0 ? (
-        <PlaceholderSegment
-          caption={
-            transfers.length === 0 || view.tab === 'all'
-              ? `No ${direction}s to display`
-              : `No ${tabs
-                  .find(({ key }) => key === view.tab)
-                  ?.label.toLowerCase()} ${direction}s`
-          }
-          icon={direction}
+      {/* tabs that sit on the panel below */}
+      {transfers.length > 0 && (
+        <TransfersToolbar
+          allExpanded={allExpanded}
+          counts={counts}
+          onSortChange={updateView}
+          onTabChange={(tab) => updateView({ tab })}
+          onToggleExpanded={toggleAll}
+          view={view}
         />
-      ) : (
-        <div className="transfer-users">
-          {shown.map((user) => (
-            <TransferGroup
-              cancel={cancel}
-              cancelAll={cancelAll}
-              direction={direction}
-              expanded={expanded.has(user.username)}
-              key={user.username}
-              onToggle={() => toggleUser(user.username)}
-              remove={remove}
-              removeAll={removeAll}
-              retry={retry}
-              retryAll={retryAll}
-              user={user}
-            />
-          ))}
-        </div>
       )}
+      {/* the tabs sit on this panel, and the list sits inside it */}
+      <div className={transfers.length > 0 ? 'transfers-panel' : undefined}>
+        {shown.length === 0 ? (
+          <PlaceholderSegment
+            caption={
+              transfers.length === 0 || view.tab === 'all'
+                ? `No ${direction}s to display`
+                : `No ${tabs
+                    .find(({ key }) => key === view.tab)
+                    ?.label.toLowerCase()} ${direction}s`
+            }
+            icon={direction}
+          />
+        ) : (
+          <div className="transfer-users">
+            {shown.map((user) => (
+              <TransferGroup
+                cancel={cancel}
+                cancelAll={cancelAll}
+                direction={direction}
+                expanded={expanded.has(user.username)}
+                key={user.username}
+                onToggle={() => toggleUser(user.username)}
+                remove={remove}
+                removeAll={removeAll}
+                retry={retry}
+                retryAll={retryAll}
+                user={user}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </>
   );
 };
