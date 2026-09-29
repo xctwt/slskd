@@ -100,7 +100,7 @@ namespace slskd.Integrations.MusicBrainz
         }
 
         private DateTime ArchiveSkippedUntil { get; set; } = DateTime.MinValue;
-        private IMemoryCache Cache { get; } = new MemoryCache(new MemoryCacheOptions { SizeLimit = 100 * 1024 * 1024 });
+        private IMemoryCache Cache { get; } = new MemoryCache(new MemoryCacheOptions { SizeLimit = 16 * 1024 * 1024 });
         private IHttpClientFactory HttpClientFactory { get; }
         private ILogger<CoverArtService> Log { get; }
         private MusicBrainzOptions MusicBrainzOptions => OptionsMonitor.CurrentValue.Integrations.MusicBrainz;
