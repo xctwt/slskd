@@ -35,6 +35,7 @@ using Microsoft.Extensions.Options;
 namespace slskd.Search.API
 {
     using System;
+    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
     using Asp.Versioning;
@@ -288,6 +289,25 @@ namespace slskd.Search.API
             }
 
             return Ok(searches.Count);
+        }
+
+        /// <summary>
+        ///     Gets the phrases the Soulseek server excludes from searches, usually at the request of copyright holders.
+        ///     Searches containing one are rejected, since nobody would answer them.
+        /// </summary>
+        /// <response code="200">The request completed successfully; the list is empty until the server sends it.</response>
+        /// <returns></returns>
+        [HttpGet("excluded-phrases")]
+        [Authorize(Policy = AuthPolicy.Any)]
+        [ProducesResponseType(typeof(IReadOnlyList<string>), 200)]
+        public IActionResult GetExcludedPhrases()
+        {
+            if (Program.IsRelayAgent)
+            {
+                return Forbid();
+            }
+
+            return Ok(Searches.ExcludedPhrases);
         }
     }
 }

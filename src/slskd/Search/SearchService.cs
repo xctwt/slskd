@@ -57,6 +57,11 @@ namespace slskd.Search
     public interface ISearchService
     {
         /// <summary>
+        ///     Gets the phrases the Soulseek server excludes from searches, as last sent after logging in.
+        /// </summary>
+        IReadOnlyList<string> ExcludedPhrases { get; }
+
+        /// <summary>
         ///     Deletes the specified search.
         /// </summary>
         /// <param name="search">The search to delete.</param>
@@ -145,15 +150,23 @@ namespace slskd.Search
             ContextFactory = contextFactory;
 
             // the server sends the list after each login
-            Client.ExcludedSearchPhrasesReceived += (_, phrases) => ExcludedPhrases = phrases.ToList();
+            Client.ExcludedSearchPhrasesReceived += (_, phrases) =>
+            {
+                ExcludedPhrases = phrases.ToList();
+                Log.Information("The Soulseek server excludes {Count} search phrases", ExcludedPhrases.Count);
+            };
         }
+
+        /// <summary>
+        ///     Gets the phrases the Soulseek server excludes from searches, as last sent after logging in.
+        /// </summary>
+        public IReadOnlyList<string> ExcludedPhrases { get; private set; } = [];
 
         private ConcurrentDictionary<Guid, CancellationTokenSource> CancellationTokens { get; }
             = new ConcurrentDictionary<Guid, CancellationTokenSource>();
 
         private ISoulseekClient Client { get; }
         private IDbContextFactory<SearchDbContext> ContextFactory { get; }
-        private IReadOnlyList<string> ExcludedPhrases { get; set; } = [];
         private ILogger Log { get; set; } = Serilog.Log.ForContext<Application>();
         private IOptionsMonitor<Options> OptionsMonitor { get; }
         private IHubContext<SearchHub> SearchHub { get; set; }
