@@ -91,6 +91,14 @@ namespace slskd.Search.API
                 return BadRequest(ModelState.GetReadableString());
             }
 
+            // nobody would answer, so fail now instead of leaving the user waiting on an empty search
+            var excludedPhrase = Searches.FindExcludedPhrase(request.SearchText);
+
+            if (excludedPhrase is not null)
+            {
+                return BadRequest($"The Soulseek server blocks searches containing \"{excludedPhrase}\", usually because of a copyright complaint, so nobody would answer. Search without it, e.g. the album title and a track name.");
+            }
+
             if (!SearchRequestLimiter.Wait(0))
             {
                 return StatusCode(429, "Only one concurrent operation is permitted. Wait until the previous request completes");

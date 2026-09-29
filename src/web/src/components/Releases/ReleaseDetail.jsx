@@ -285,7 +285,8 @@ const ReleaseDetail = ({ disabled, id }) => {
       setDisplayCount(10);
       setSearch(next);
     } catch (createError) {
-      toast.error(getErrorMessage(createError));
+      // shown under the search box, where it stays; some (like a blocked phrase) need reading
+      setSearchError(createError);
     } finally {
       setStarting(false);
     }
