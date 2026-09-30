@@ -10,7 +10,7 @@ import {
 import { getErrorMessage } from '../../lib/util';
 import { LoaderSegment, PlaceholderSegment } from '../Shared';
 import TransferGroup from './TransferGroup';
-import TransfersHeader from './TransfersHeader';
+import TransfersActions from './TransfersActions';
 import TransfersToolbar from './TransfersToolbar';
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -222,20 +222,22 @@ const Transfers = ({ direction, server }) => {
 
   return (
     <>
-      <TransfersHeader
-        cancelling={cancelling}
-        direction={direction}
-        onCancelAll={cancelAll}
-        onRemoveAll={removeAll}
-        onRetryAll={retryAll}
-        removing={removing}
-        retrying={retrying}
-        server={server}
-        transfers={transfers}
-      />
       {/* tabs that sit on the panel below */}
       {transfers.length > 0 && (
         <TransfersToolbar
+          actions={
+            <TransfersActions
+              cancelling={cancelling}
+              direction={direction}
+              onCancelAll={cancelAll}
+              onRemoveAll={removeAll}
+              onRetryAll={retryAll}
+              removing={removing}
+              retrying={retrying}
+              server={server}
+              transfers={transfers}
+            />
+          }
           allExpanded={allExpanded}
           counts={counts}
           onSortChange={updateView}

@@ -395,6 +395,11 @@ body {
     border-color: var(--slskd-tertiary-border-color) !important;
 }
 
+/* the active tab takes its pane's background so the two join, as in the light theme */
+:root.dark .ui.tabular.menu .active.item {
+    background: var(--smui-segment-background);
+}
+
 /* a progress bar's empty track is nearly transparent black, invisible on the dark theme */
 :root.dark .ui.progress {
     background: var(--slskd-tertiary-background);
@@ -405,4 +410,17 @@ body {
 :root.dark .ui.checkbox input[disabled] ~ label {
     color: var(--slskd-color-subtle) !important;
     opacity: 0.8;
+}
+
+/* a split button's menu opens at the bottom of its padding box, on top of the
+   buttons' translucent bottom border, which then shows twice as bright */
+.ui.buttons > .ui.dropdown.button > .menu {
+    margin-top: 1px;
+}
+
+/* the users glyph is wider than semantic's icon box, so it crowds the label
+   after it in a tab; lists keep the box so their labels stay aligned */
+.ui.tabular.menu .item > i.icon.users {
+    width: auto;
+    margin-right: 0.5em;
 }

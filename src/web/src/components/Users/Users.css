@@ -54,16 +54,17 @@
 /* open user tabs */
 .users-tabs {
   display: flex;
-  flex-wrap: wrap;
   align-items: flex-end;
   gap: 0.25em;
   margin-top: 15px;
   border-bottom: var(--smui-segment-border, 1px solid rgba(34, 36, 38, 0.15));
 }
 
-/* the pinned interests and groups are folder tabs on the panel below: each overlaps
-   the strip's bottom line, and the active one takes the panel's background so it
-   joins the panel. open profiles are pills beside them */
+/* the pinned interests and groups are folder tabs on the panel below: they stand
+   on the strip's bottom line instead of drawing their own, since the translucent
+   borders would add up where they overlap, and the active one covers the line
+   between its sides and takes the panel's background so it joins the panel. open
+   profiles are pills beside them */
 .users-tab {
   display: flex;
   align-items: center;
@@ -71,11 +72,12 @@
 }
 
 .users-tab-pinned {
-  margin-bottom: -1px;
+  position: relative;
+  flex-shrink: 0;
   border: var(--smui-segment-border, 1px solid rgba(34, 36, 38, 0.15));
+  border-bottom: none;
   border-radius: 4px 4px 0 0;
   background: var(--slskd-secondary-background, #f3f4f5);
-  font-size: 1.05em;
   opacity: 0.8;
 }
 
@@ -84,9 +86,18 @@
 }
 
 .users-tab-pinned.active {
-  border-bottom-color: var(--smui-segment-background, #fff);
   background: var(--smui-segment-background, #fff);
   opacity: 1;
+}
+
+.users-tab-pinned.active::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: var(--smui-segment-background, #fff);
 }
 
 .users-tab:not(.users-tab-pinned) {
@@ -96,8 +107,45 @@
   background: var(--slskd-secondary-background, #fff);
 }
 
-.users-tab-pinned + .users-tab:not(.users-tab-pinned) {
-  margin-left: 0.75em;
+/* open profiles stay on one row and scroll sideways instead of wrapping; the
+   scrollbar is hidden, since it would cover the pills, while the fades show
+   there's more, the wheel scrolls the row and the active pill is kept in view */
+.users-tabs-open {
+  display: flex;
+  align-items: center;
+  gap: 0.25em;
+  flex: 0 1 auto;
+  min-width: 0;
+  align-self: center;
+  padding: 2px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.users-tabs-open::-webkit-scrollbar {
+  display: none;
+}
+
+.users-tabs-open .users-tab {
+  flex-shrink: 0;
+}
+
+.users-tabs-open.overflow-left {
+  mask-image: linear-gradient(to right, transparent, #000 2.5em);
+}
+
+.users-tabs-open.overflow-right {
+  mask-image: linear-gradient(to left, transparent, #000 2.5em);
+}
+
+.users-tabs-open.overflow-left.overflow-right {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 2.5em,
+    #000 calc(100% - 2.5em),
+    transparent
+  );
 }
 
 .users-tab:not(.users-tab-pinned).active {
@@ -129,7 +177,14 @@
 }
 
 .users-tab-pinned .users-tab-name {
-  padding: 0.65em 1.25em;
+  padding: 0.5em 0.8em;
+}
+
+/* semantic's fixed icon width is narrower than the users glyph, which then
+   touches its label */
+.users-tab-pinned .users-tab-name > .icon {
+  width: auto;
+  margin: 0 0.4em 0 0;
 }
 
 .users-tab-close {
@@ -160,9 +215,11 @@
   font: inherit;
   cursor: pointer;
   opacity: 0.6;
+  flex-shrink: 0;
   padding: 0.4em 0.6em;
   align-self: center;
   text-decoration: underline;
+  white-space: nowrap;
 }
 
 .users-user-header {

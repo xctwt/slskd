@@ -1,5 +1,7 @@
+/* the same height as the other pages' search bars, which the input stretches to */
 .ui.segment.releases-search-segment {
   margin-top: 15px;
+  height: 78px;
   display: flex;
 }
 
