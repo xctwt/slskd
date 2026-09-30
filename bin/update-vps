@@ -1,20 +1,26 @@
 #!/usr/bin/env bash
-# updates an slskd installed as a systemd service to the latest build of this fork, from the
-# "qol-latest" release that .github/workflows/fork-build.yml publishes. run it on the server:
+# updates webseekd installed as a systemd service to the latest build, from the "qol-latest" release
+# that .github/workflows/fork-build.yml publishes. run it on the server:
 #
-#   curl -fsSL https://raw.githubusercontent.com/xctwt/slskd/master/bin/update-vps | sudo bash
+#   curl -fsSL https://raw.githubusercontent.com/xctwt/webseekd/main/bin/update-vps | sudo bash
 #
 # settings (environment variables):
-#   SERVICE      systemd service name (default: slskd)
-#   INSTALL_DIR  folder holding the slskd binary (default: read from the service)
-#   REPO, TAG    where to download from (default: xctwt/slskd, qol-latest)
+#   SERVICE      systemd service name (default: webseekd, or slskd if there's no webseekd service)
+#   INSTALL_DIR  folder holding the binary (default: read from the service)
+#   REPO, TAG    where to download from (default: xctwt/webseekd, qol-latest)
+#
+# also updates an install of slskd, or of this fork from before it was renamed, whose service runs
+# <INSTALL_DIR>/slskd: that file becomes a link to the new webseekd binary, so the service keeps working.
 #
 # the config file and data are left alone; the previous binaries are kept in <INSTALL_DIR>.previous
 # and put back automatically if the new version doesn't start.
 set -euo pipefail
 
-SERVICE="${SERVICE:-slskd}"
-REPO="${REPO:-xctwt/slskd}"
+if [ -z "${SERVICE:-}" ]; then
+  if systemctl cat webseekd > /dev/null 2>&1; then SERVICE=webseekd; else SERVICE=slskd; fi
+fi
+
+REPO="${REPO:-xctwt/webseekd}"
 TAG="${TAG:-qol-latest}"
 
 fail() { echo "💥  $*" >&2; exit 1; }
@@ -28,32 +34,37 @@ case "$(uname -m)" in
 esac
 
 if [ -z "${INSTALL_DIR:-}" ]; then
-  # ExecStart looks like: { path=/opt/slskd/slskd ; argv[]=/opt/slskd/slskd --app-dir ... }
+  # ExecStart looks like: { path=/opt/webseekd/webseekd ; argv[]=/opt/webseekd/webseekd --app-dir ... }
   executable=$(systemctl show -p ExecStart --value "$SERVICE" 2>/dev/null | sed -n 's/.*path=\([^ ;]*\).*/\1/p' | head -n 1)
   [ -n "$executable" ] || fail "couldn't find the '$SERVICE' service; set SERVICE or INSTALL_DIR"
-  [[ "$executable" == */slskd ]] || fail "the '$SERVICE' service runs $executable, not an slskd binary (Docker?); set INSTALL_DIR if this is right"
+  [[ "$executable" == */webseekd || "$executable" == */slskd ]] || fail "the '$SERVICE' service runs $executable, not a webseekd or slskd binary (Docker?); set INSTALL_DIR if this is right"
   INSTALL_DIR=$(dirname "$executable")
+  binary=$(basename "$executable")
+elif [ -e "$INSTALL_DIR/webseekd" ]; then
+  binary=webseekd
+else
+  binary=slskd
 fi
 
-[ -x "$INSTALL_DIR/slskd" ] || fail "no slskd binary in $INSTALL_DIR"
+[ -x "$INSTALL_DIR/$binary" ] || fail "no $binary binary in $INSTALL_DIR"
 
-# the folder gets backed up and its files replaced, so make sure it's an unpacked slskd release and
+# the folder gets backed up and its files replaced, so make sure it's an unpacked release and
 # not somewhere shared like /usr/local/bin
-[ -d "$INSTALL_DIR/wwwroot" ] || fail "$INSTALL_DIR doesn't look like an unpacked slskd release (no wwwroot folder); not touching it"
+[ -d "$INSTALL_DIR/wwwroot" ] || fail "$INSTALL_DIR doesn't look like an unpacked release (no wwwroot folder); not touching it"
 
-owner=$(stat -c '%U:%G' "$INSTALL_DIR/slskd")
+owner=$(stat -L -c '%U:%G' "$INSTALL_DIR/$binary")
 base="https://github.com/$REPO/releases/download/$TAG"
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
 echo "⬇️   downloading $runtime build from $REPO ($TAG)"
-curl -fL --retry 3 -o "$work/slskd-$runtime.tar.gz" "$base/slskd-$runtime.tar.gz"
+curl -fL --retry 3 -o "$work/webseekd-$runtime.tar.gz" "$base/webseekd-$runtime.tar.gz"
 curl -fsSL --retry 3 -o "$work/SHA256SUMS" "$base/SHA256SUMS"
 (cd "$work" && sha256sum --check --ignore-missing --quiet SHA256SUMS) || fail "checksum mismatch; not installing"
 
 mkdir "$work/new"
-tar -xzf "$work/slskd-$runtime.tar.gz" -C "$work/new"
-[ -x "$work/new/slskd" ] || fail "the download has no slskd binary"
+tar -xzf "$work/webseekd-$runtime.tar.gz" -C "$work/new"
+[ -x "$work/new/webseekd" ] || fail "the download has no webseekd binary"
 
 echo "🛑  stopping $SERVICE"
 systemctl stop "$SERVICE"
@@ -65,6 +76,13 @@ cp -a "$INSTALL_DIR" "$INSTALL_DIR.previous"
 # the web UI's file names change with every build, so replace it rather than copying over it
 rm -rf "$INSTALL_DIR/wwwroot"
 cp -a "$work/new/." "$INSTALL_DIR/"
+
+if [ "$binary" = slskd ]; then
+  # the service still starts <INSTALL_DIR>/slskd
+  rm -f "$INSTALL_DIR/slskd"
+  ln -s webseekd "$INSTALL_DIR/slskd"
+fi
+
 chown -R "$owner" "$INSTALL_DIR"
 
 echo "▶️   starting $SERVICE"
@@ -75,10 +93,15 @@ if ! systemctl is-active --quiet "$SERVICE"; then
   echo "💥  $SERVICE didn't stay up; putting the previous version back" >&2
   journalctl -u "$SERVICE" -n 30 --no-pager >&2 || true
   systemctl stop "$SERVICE" || true
-  rm -rf "$INSTALL_DIR/wwwroot"
+  # removed first so that copying the old files back doesn't write through the link
+  rm -rf "$INSTALL_DIR/wwwroot" "$INSTALL_DIR/slskd" "$INSTALL_DIR/webseekd"
   cp -a "$INSTALL_DIR.previous/." "$INSTALL_DIR/"
   systemctl start "$SERVICE"
   exit 1
 fi
 
-echo "🎉  updated: $("$INSTALL_DIR/slskd" --version 2>/dev/null | head -n 1 || echo "see the web UI for the version")"
+echo "🎉  updated: $("$INSTALL_DIR/webseekd" --version 2>/dev/null | head -n 1 || echo "see the web UI for the version")"
+
+if [ "$binary" = slskd ]; then
+  echo "ℹ️   $SERVICE runs $INSTALL_DIR/slskd, which now links to webseekd. You can point ExecStart at $INSTALL_DIR/webseekd instead."
+fi

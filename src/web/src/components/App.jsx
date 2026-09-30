@@ -338,7 +338,7 @@ class App extends Component {
         <ErrorSegment
           caption={
             <>
-              <span>Lost connection to slskd</span>
+              <span>Lost connection to webseekd</span>
               <br />
               <span>
                 {retriesExhausted ? 'Refresh to reconnect' : 'Retrying...'}
@@ -516,7 +516,7 @@ class App extends Component {
                   <Modal.Actions>
                     <Button
                       fluid
-                      href="https://github.com/slskd/slskd/releases"
+                      href="https://github.com/xctwt/webseekd/releases"
                       primary
                       style={{ marginLeft: 0 }}
                     >

@@ -31,13 +31,13 @@ body:
     description: |
       examples:
         - **OS**: Ubuntu 22.04
-        - **slskd**: 0.24.0
+        - **webseekd**: 0.26.0.65534+abc1234
         - **Docker Install?**: Yes
         - **Filesystem**: ext4
         - **Hardware**: Raspberry Pi 5 4gb
     value: |
         - OS: 
-        - slskd: 
+        - webseekd: 
         - Docker Install?: 
         - Filesystem: 
         - Hardware:

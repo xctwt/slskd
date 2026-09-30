@@ -63,17 +63,21 @@ const AppFooter = ({
       <Menu.Menu position="right">
         <Menu.Item
           as="a"
-          href="https://github.com/slskd/slskd"
+          href="https://github.com/xctwt/webseekd"
           rel="noreferrer"
           target="_blank"
+          title="webseekd is a modified version of slskd, not the original program. It is not maintained by, endorsed by, or affiliated with the slskd project or its author(s)."
         >
           <img
             alt=""
             className="footer-logo"
             src={`${urlBase}/favicon.ico`}
           />
-          slskd
+          webseekd
           {current && <span className="footer-version">{current}</span>}
+          <span className="footer-notice">
+            a modified version of slskd, not the original
+          </span>
           <span className="footer-license">AGPLv3</span>
         </Menu.Item>
       </Menu.Menu>

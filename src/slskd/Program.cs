@@ -5,6 +5,8 @@
 //     █▄▄▄▄▄█▄▄█▄▄▄▄▄█▄▄█▄▄█▄▄▄▄▄█
 //   ┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ━━━━ ━  ━┉   ┉     ┉
 //   │ Copyright (c) JP Dillingham.
+//   │ Copyright (c) 2026 xctwt
+//   │ Modified: renamed to webseekd with its own startup banner and network version; registered interests, MusicBrainz, GeoIP and options schema services; normalized the application directory
 //   │
 //   │ This program is free software: you can redistribute it and/or modify
 //   │ it under the terms of the GNU Affero General Public License as published
@@ -26,6 +28,7 @@
 //   │
 //   ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌ ╌ ╌╌╌╌ ╌
 //   │ SPDX-FileCopyrightText: JP Dillingham
+//   │ SPDX-FileCopyrightText: 2026 xctwt
 //   │ SPDX-License-Identifier: AGPL-3.0-only
 //   ╰───────────────────────────────────────────╶──── ─ ─── ─  ── ──┈  ┈
 // </copyright>
@@ -109,9 +112,24 @@ namespace slskd
     public static class Program
     {
         /// <summary>
-        ///     The name of the application.
+        ///     The internal name of the application.
         /// </summary>
+        /// <remarks>
+        ///     Kept as "slskd" so that the application directory, configuration file, configuration section and
+        ///     environment variable prefix stay compatible with existing slskd installs. Use <see cref="DisplayName"/>
+        ///     for anything users see.
+        /// </remarks>
         public static readonly string AppName = "slskd";
+
+        /// <summary>
+        ///     The name of the application, as shown to users.
+        /// </summary>
+        public static readonly string DisplayName = "webseekd";
+
+        /// <summary>
+        ///     The url to the source code repository.
+        /// </summary>
+        public static readonly string RepositoryUrl = "https://github.com/xctwt/webseekd";
 
         /// <summary>
         ///     The DateTime of the 'genesis' of the application (the initial commit).
@@ -126,7 +144,7 @@ namespace slskd
         /// <summary>
         ///     The url to the issues/support site.
         /// </summary>
-        public static readonly string IssuesUrl = "https://github.com/slskd/slskd/issues";
+        public static readonly string IssuesUrl = $"{RepositoryUrl}/issues";
 
         /// <summary>
         ///     The global prefix for environment variables.
@@ -136,7 +154,7 @@ namespace slskd
         /// <summary>
         ///     The default XML documentation filename.
         /// </summary>
-        public static readonly string XmlDocumentationFile = Path.Combine(AppContext.BaseDirectory, "etc", $"{AppName}.xml");
+        public static readonly string XmlDocumentationFile = Path.Combine(AppContext.BaseDirectory, "etc", $"{DisplayName}.xml");
 
         /// <summary>
         ///     The default application data directory.
@@ -179,12 +197,12 @@ namespace slskd
         public static string FullVersion { get; } = $"{SemanticVersion} ({InformationalVersion})";
 
         /// <summary>
-        ///     Gets the minor version to identify slskd on the network.
+        ///     Gets the minor version to identify webseekd on the network.
         /// </summary>
         /// <remarks>
-        ///     NOTICE: If you have forked slskd, change this number to something else.
+        ///     NOTICE: this must not match the value used by slskd (760) or any other Soulseek client.
         /// </remarks>
-        public static int NetworkMinorVersion { get; } = 760;
+        public static int NetworkMinorVersion { get; } = 4217;
 
         /// <summary>
         ///     Gets a value indicating whether the current version is a Canary build.
@@ -389,7 +407,7 @@ namespace slskd
 
                 if (!created)
                 {
-                    Log.Fatal($"An instance of {AppName} is already running");
+                    Log.Fatal($"An instance of {DisplayName} is already running");
                     return;
                 }
             }
@@ -587,7 +605,7 @@ namespace slskd
                                 else
                                 {
                                     Log.Information($"Using randomly generated self-signed certificate");
-                                    listenOptions.UseHttps(X509.Generate(subject: AppName));
+                                    listenOptions.UseHttps(X509.Generate(subject: DisplayName));
                                 }
                             });
                         }
@@ -1025,17 +1043,17 @@ namespace slskd
                     options.SwaggerDoc("v0", new OpenApiInfo
                     {
                         Version = "v0",
-                        Title = AppName,
-                        Description = "A modern client-server application for the Soulseek file sharing network",
+                        Title = DisplayName,
+                        Description = "A web-based client for the Soulseek file sharing network. A modified version of slskd, not the original program.",
                         Contact = new OpenApiContact
                         {
                             Name = "GitHub",
-                            Url = new Uri("https://github.com/slskd/slskd"),
+                            Url = new Uri(RepositoryUrl),
                         },
                         License = new OpenApiLicense
                         {
-                            Name = "AGPL-3.0 license",
-                            Url = new Uri("https://github.com/slskd/slskd/blob/master/LICENSE"),
+                            Name = "AGPL-3.0 license, with Additional Terms",
+                            Url = new Uri($"{RepositoryUrl}/blob/main/LICENSE"),
                         },
                     });
 
@@ -1589,7 +1607,7 @@ namespace slskd
         {
             filename = Path.Combine(AppContext.BaseDirectory, filename);
 
-            var cert = X509.Generate(subject: AppName, password, X509KeyStorageFlags.Exportable);
+            var cert = X509.Generate(subject: DisplayName, password, X509KeyStorageFlags.Exportable);
             IOFile.WriteAllBytes(filename, cert.Export(X509ContentType.Pkcs12, password));
 
             return (filename, password);
@@ -1642,7 +1660,7 @@ namespace slskd
 
             var longestItem = lines.Max(l => l.Item.Length);
 
-            Log.Information("\nusage: slskd [arguments]\n");
+            Log.Information($"\nusage: {DisplayName} [arguments]\n");
             Log.Information("arguments:\n");
 
             foreach (var line in lines)
@@ -1704,89 +1722,22 @@ namespace slskd
             }
         }
 
-        private static void PrintLogoOld(string version)
-        {
-            try
-            {
-                var padding = 56 - version.Length;
-                var paddingLeft = padding / 2;
-                var paddingRight = paddingLeft + (padding % 2);
-
-                var centeredVersion = new string(' ', paddingLeft) + version + new string(' ', paddingRight);
-
-                var logos = new[]
-                {
-                    $@"
-                   ▄▄▄▄         ▄▄▄▄       ▄▄▄▄
-           ▄▄▄▄▄▄▄ █  █ ▄▄▄▄▄▄▄ █  █▄▄▄ ▄▄▄█  █
-           █__ --█ █  █ █__ --█ █    ◄█ █  -  █
-           █▄▄▄▄▄█ █▄▄█ █▄▄▄▄▄█ █▄▄█▄▄█ █▄▄▄▄▄█",
-                    @$"
-                    ▄▄▄▄     ▄▄▄▄     ▄▄▄▄
-              ▄▄▄▄▄▄█  █▄▄▄▄▄█  █▄▄▄▄▄█  █
-              █__ --█  █__ --█    ◄█  -  █
-              █▄▄▄▄▄█▄▄█▄▄▄▄▄█▄▄█▄▄█▄▄▄▄▄█",
-                };
-
-                var logo = logos[new System.Random().Next(0, logos.Length)];
-
-                var banner = @$"
-{logo}
-┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑
-│           GNU AFFERO GENERAL PUBLIC LICENSE            │
-│                   https://slskd.org                    │
-│                                                        │
-│{centeredVersion}│";
-
-                if (IsDevelopment)
-                {
-                    banner += "\n│■■■■■■■■■■■■■■■■■■■■► DEVELOPMENT ◄■■■■■■■■■■■■■■■■■■■■■│";
-                }
-
-                if (IsCanary)
-                {
-                    banner += "\n│■■■■■■■■■■■■■■■■■■■■■■■► CANARY ◄■■■■■■■■■■■■■■■■■■■■■■■│";
-                }
-
-                banner += "\n└────────────────────────────────────────────────────────┘";
-
-                Console.WriteLine(banner);
-            }
-            catch
-            {
-                // noop. console may not be available in all cases.
-            }
-        }
-
         private static void PrintLogo(string version)
         {
             try
             {
-                var padding = 56 - version.Length;
-                var paddingLeft = padding / 2;
-                var paddingRight = paddingLeft + (padding % 2);
-
-                var centeredVersion = new string(' ', paddingLeft) + version + new string(' ', paddingRight);
-
-                var logos = new[]
-                {
-                    $@"
-          ▄▄▄▄         ▄▄▄▄       ▄▄▄▄
-  ▄▄▄▄▄▄▄ █  █ ▄▄▄▄▄▄▄ █  █▄▄▄ ▄▄▄█  █
-  █__ --█ █  █ █__ --█ █    ◄█ █  -  █
-  █▄▄▄▄▄█ █▄▄█ █▄▄▄▄▄█ █▄▄█▄▄█ █▄▄▄▄▄█",
-                    @$"
-        ▄▄▄▄     ▄▄▄▄     ▄▄▄▄
-  ▄▄▄▄▄▄█  █▄▄▄▄▄█  █▄▄▄▄▄█  █
-  █__ --█  █__ --█    ◄█  -  █
-  █▄▄▄▄▄█▄▄█▄▄▄▄▄█▄▄█▄▄█▄▄▄▄▄█",
-                };
-
-                var logo = logos[new System.Random().Next(0, logos.Length)];
+                var logo = @"
+  ╻ ╻┏━╸┏┓ ┏━┓┏━╸┏━╸╻┏ ╺┳┓
+  ┃╻┃┣╸ ┣┻┓┗━┓┣╸ ┣╸ ┣┻┓ ┃┃
+  ┗┻┛┗━╸┗━┛┗━┛┗━╸┗━╸╹ ╹╺┻┛";
 
                 var banner = @$"
 {logo}
-┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ━━━━ ━  ━┉   ┉     ┉
+╭──────────────────────────────────────────────────────────────────────
+│ ⚠️ webseekd is a modified version of slskd, not the original program.
+│ It is not maintained by, endorsed by, or affiliated with the slskd
+│ project or its author(s).
+│
 │ This program is free software: you can redistribute it and/or modify
 │ it under the terms of the GNU Affero General Public License as published
 │ by the Free Software Foundation, version 3.
@@ -1796,10 +1747,10 @@ namespace slskd
 │ of the AGPLv3.  See the LICENSE file in the root directory of this
 │ project for the complete terms and conditions.
 │
-│ 🌐 https://slskd.org
-│ 🐱 https://github.com/slskd/slskd
+│ Based on slskd, Copyright (c) JP Dillingham.
+│ 🐱 {RepositoryUrl}
 │
-├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌ ╌ ╌╌╌╌ ╌
+├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 │ {version}";
 
                 if (IsDevelopment)
@@ -1812,7 +1763,7 @@ namespace slskd
                     banner += "\n│ └─▸ 🧪 CANARY";
                 }
 
-                banner += "\n╰───────────────────────────────────────────╶──── ─ ─── ─  ── ──┈  ┈";
+                banner += "\n╰──────────────────────────────────────────────────────────────────────";
 
                 Console.WriteLine(banner);
             }

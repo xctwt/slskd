@@ -1,9 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <RepositoryUrl>https://github.com/slskd/slskd</RepositoryUrl>
-    <PackageProjectUrl>https://slskd.org</PackageProjectUrl>
-    <Authors>JP Dillingham</Authors>
-    <Copyright>Copyright (c) JP Dillingham</Copyright>
+    <!-- the binary is named after the fork; namespaces stay 'slskd' -->
+    <AssemblyName>webseekd</AssemblyName>
+    <RootNamespace>slskd</RootNamespace>
+    <Product>webseekd</Product>
+    <Description>A modified version of slskd; not the original program.</Description>
+    <RepositoryUrl>https://github.com/xctwt/webseekd</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/xctwt/webseekd</PackageProjectUrl>
+    <Authors>JP Dillingham, xctwt</Authors>
+    <Copyright>Copyright (c) JP Dillingham; Copyright (c) 2026 xctwt</Copyright>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
   
@@ -48,12 +53,12 @@
   <Target Name="CopyAfterBuild" AfterTargets="AfterBuild">
     <Copy SourceFiles="..\..\LICENSE" DestinationFolder="$(OutDir)" />
     <Copy SourceFiles="..\..\config\slskd.example.yml" DestinationFolder="$(OutDir)\config" />
-    <Copy SourceFiles="$(OutDir)\slskd.xml" DestinationFolder="$(OutDir)\etc" />
+    <Copy SourceFiles="$(OutDir)\$(AssemblyName).xml" DestinationFolder="$(OutDir)\etc" />
   </Target>
   <Target Name="CopyOnPublish" AfterTargets="Publish">
     <Copy SourceFiles="..\..\LICENSE" DestinationFolder="$(PublishDir)" />
     <Copy SourceFiles="..\..\config\slskd.example.yml" DestinationFolder="$(PublishDir)\config" />
-    <Move SourceFiles="$(PublishDir)\slskd.xml" DestinationFolder="$(PublishDir)\etc" />
+    <Move SourceFiles="$(PublishDir)\$(AssemblyName).xml" DestinationFolder="$(PublishDir)\etc" />
   </Target>
 
   <ItemGroup>

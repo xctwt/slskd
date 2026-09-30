@@ -1,10 +1,10 @@
-// <copyright file="MusicBrainzService.cs" company="JP Dillingham">
+// <copyright file="MusicBrainzService.cs" company="xctwt">
 //           ▄▄▄▄     ▄▄▄▄     ▄▄▄▄
 //     ▄▄▄▄▄▄█  █▄▄▄▄▄█  █▄▄▄▄▄█  █
 //     █__ --█  █__ --█    ◄█  -  █
 //     █▄▄▄▄▄█▄▄█▄▄▄▄▄█▄▄█▄▄█▄▄▄▄▄█
 //   ┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ━━━━ ━  ━┉   ┉     ┉
-//   │ Copyright (c) JP Dillingham.
+//   │ Copyright (c) 2026 xctwt.
 //   │
 //   │ This program is free software: you can redistribute it and/or modify
 //   │ it under the terms of the GNU Affero General Public License as published
@@ -22,10 +22,10 @@
 //   │ of the AGPLv3.  See the LICENSE file in the root directory of this
 //   │ project for the complete terms and conditions.
 //   │
-//   │ https://slskd.org
+//   │ https://github.com/xctwt/webseekd
 //   │
 //   ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌ ╌ ╌╌╌╌ ╌
-//   │ SPDX-FileCopyrightText: JP Dillingham
+//   │ SPDX-FileCopyrightText: 2026 xctwt
 //   │ SPDX-License-Identifier: AGPL-3.0-only
 //   ╰───────────────────────────────────────────╶──── ─ ─── ─  ── ──┈  ┈
 // </copyright>
@@ -245,8 +245,8 @@ namespace slskd.Integrations.MusicBrainz
                 using var request = new HttpRequestMessage(HttpMethod.Get, uri);
 
                 // MusicBrainz asks every client to identify itself this way
-                request.Headers.UserAgent.Add(new ProductInfoHeaderValue(Program.AppName, Program.SemanticVersion));
-                request.Headers.UserAgent.Add(new ProductInfoHeaderValue("(+https://slskd.org)"));
+                request.Headers.UserAgent.Add(new ProductInfoHeaderValue(Program.DisplayName, Program.SemanticVersion));
+                request.Headers.UserAgent.Add(new ProductInfoHeaderValue($"(+{Program.RepositoryUrl})"));
                 request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
                 Log.LogDebug("Requesting {Uri} from MusicBrainz", uri);
