@@ -1,13 +1,13 @@
 # webseekd
 
-[![Build](https://img.shields.io/github/actions/workflow/status/xctwt/slskd/fork-build.yml?branch=master&logo=github&label=build)](https://github.com/xctwt/slskd/actions/workflows/fork-build.yml)
+[![Build](https://img.shields.io/github/actions/workflow/status/xctwt/webseekd/fork-build.yml?branch=main&logo=github&label=build)](https://github.com/xctwt/webseekd/actions/workflows/fork-build.yml)
 
 A web-based client for the [Soulseek](https://www.slsknet.org/news/) file-sharing network, with release lookups, a settings editor and other quality-of-life features inspired by [Nicotine+](https://nicotine-plus.org/). It is based on slskd and works with an existing slskd configuration and data.
 
 > [!NOTE]
 > This is a modified version of slskd.  It is not maintained by, endorsed by, or affiliated with the slskd project or its author(s).
 >
-> Please report problems with webseekd [here](https://github.com/xctwt/slskd/issues), not to the slskd project.
+> Please report problems with webseekd [here](https://github.com/xctwt/webseekd/issues), not to the slskd project.
 
 ## Differences from slskd
 
@@ -70,7 +70,7 @@ The page needs `remote_configuration: true` in `slskd.yml`, the same as slskd's 
 
 ### Builds
 
-- There is no published Docker image. Every push to `master` publishes Linux builds (`linux-x64` and `linux-arm64`) to the rolling [`qol-latest`](https://github.com/xctwt/slskd/releases/tag/qol-latest) release.
+- There is no published Docker image. Every push to `main` publishes Linux builds (`linux-x64` and `linux-arm64`) to the rolling [`qol-latest`](https://github.com/xctwt/webseekd/releases/tag/qol-latest) release.
 - [`bin/update-vps`](bin/update-vps) installs the latest build over an existing systemd install and rolls back if it doesn't start.
 - Builds are versioned after the slskd release they're based on, e.g. `0.26.0.65534+abc1234`.
 
@@ -78,17 +78,17 @@ The page needs `remote_configuration: true` in `slskd.yml`, the same as slskd's 
 
 ### Linux server (systemd)
 
-1. Create a user and download the latest build. Use `slskd-linux-arm64.tar.gz` on ARM machines:
+1. Create a user and download the latest build. Use `webseekd-linux-arm64.tar.gz` on ARM machines:
 
    ```sh
-   sudo useradd --system --create-home --home-dir /var/lib/slskd slskd
-   sudo mkdir -p /opt/slskd
-   curl -fL https://github.com/xctwt/slskd/releases/download/qol-latest/slskd-linux-x64.tar.gz \
-     | sudo tar -xz -C /opt/slskd
-   sudo chown -R slskd:slskd /opt/slskd
+   sudo useradd --system --create-home --home-dir /var/lib/webseekd webseekd
+   sudo mkdir -p /opt/webseekd
+   curl -fL https://github.com/xctwt/webseekd/releases/download/qol-latest/webseekd-linux-x64.tar.gz \
+     | sudo tar -xz -C /opt/webseekd
+   sudo chown -R webseekd:webseekd /opt/webseekd
    ```
 
-2. Create `/etc/systemd/system/slskd.service`:
+2. Create `/etc/systemd/system/webseekd.service`:
 
    ```ini
    [Unit]
@@ -98,9 +98,9 @@ The page needs `remote_configuration: true` in `slskd.yml`, the same as slskd's 
 
    [Service]
    Type=simple
-   User=slskd
-   Group=slskd
-   ExecStart=/opt/slskd/slskd --app-dir /var/lib/slskd
+   User=webseekd
+   Group=webseekd
+   ExecStart=/opt/webseekd/webseekd --app-dir /var/lib/webseekd
    Restart=on-failure
 
    [Install]
@@ -111,10 +111,10 @@ The page needs `remote_configuration: true` in `slskd.yml`, the same as slskd's 
 
    ```sh
    sudo systemctl daemon-reload
-   sudo systemctl enable --now slskd
+   sudo systemctl enable --now webseekd
    ```
 
-   On the first run webseekd creates `/var/lib/slskd/slskd.yml`. Edit it to add your Soulseek username and password, change the web UI login (the default is `slskd` / `slskd`), and set `remote_configuration: true` if you want to use the Settings page. Then run `sudo systemctl restart slskd`. [`config/slskd.example.yml`](config/slskd.example.yml) lists every option.
+   On the first run webseekd creates `/var/lib/webseekd/slskd.yml`. The configuration file keeps slskd's name, so existing slskd configurations work unchanged. Edit it to add your Soulseek username and password, change the web UI login (the default is `slskd` / `slskd`), and set `remote_configuration: true` if you want to use the Settings page. Then run `sudo systemctl restart webseekd`. [`config/slskd.example.yml`](config/slskd.example.yml) lists every option.
 
 4. Open `http://<server>:5030`. If you put it behind a reverse proxy or Cloudflare, see the [reverse proxy guide](docs/reverse_proxy.md), and make sure WebSockets are allowed. Search results and transfers update over a WebSocket connection.
 
@@ -123,7 +123,7 @@ The page needs `remote_configuration: true` in `slskd.yml`, the same as slskd's 
 Build the image from this repository:
 
 ```sh
-git clone https://github.com/xctwt/slskd.git
+git clone https://github.com/xctwt/webseekd.git
 cd slskd
 docker build -t webseekd .
 ```
@@ -154,10 +154,10 @@ services:
 Building needs the .NET 10 SDK, Node.js 22 and bash:
 
 ```sh
-git clone https://github.com/xctwt/slskd.git
+git clone https://github.com/xctwt/webseekd.git
 cd slskd
 ./bin/build                              # builds and tests the web UI and the server
-./bin/publish --runtime linux-x64        # self-contained build in dist/linux-x64
+./bin/publish --runtime linux-x64        # self-contained build in dist/linux-x64, run with ./webseekd
 ```
 
 ## Updating
@@ -165,29 +165,29 @@ cd slskd
 - **systemd:** run the update script on the server:
 
   ```sh
-  curl -fsSL https://raw.githubusercontent.com/xctwt/slskd/master/bin/update-vps | sudo bash
+  curl -fsSL https://raw.githubusercontent.com/xctwt/webseekd/main/bin/update-vps | sudo bash
   ```
 
-  The script finds the install folder from the `slskd` service. Set `SERVICE=<name>` or `INSTALL_DIR=<folder>` if yours is different. It stops the service, keeps the current version in `<install folder>.previous`, installs the new build, and puts the previous version back if the new one doesn't stay up. Your config and data are not touched.
+  The script finds the install folder from the `webseekd` service, or the `slskd` service if there is no `webseekd` one. Set `SERVICE=<name>` or `INSTALL_DIR=<folder>` if yours is different. It stops the service, keeps the current version in `<install folder>.previous`, installs the new build, and puts the previous version back if the new one doesn't stay up. Your config and data are not touched.
 
 - **Docker:** run `git pull`, rebuild the image, and recreate the container.
 
 ## Migrating from slskd
 
-webseekd uses the same application directory as slskd: the same `slskd.yml`, the same database in `data/`, and the same logs. Nothing needs converting.
+webseekd uses the same application directory as slskd: the same `slskd.yml`, the same `SLSKD_*` environment variables, the same database in `data/`, and the same logs. Nothing needs converting. Only the program is renamed: the binary is `webseekd` instead of `slskd`.
 
 1. **Back up your application directory.** This is the folder with `slskd.yml` in it: the path given to `--app-dir`, `~/.local/share/slskd` by default, or the `/app` volume in Docker. For example, `sudo tar -czf ~/slskd-backup.tar.gz -C /var/lib slskd`.
 2. **Install webseekd over slskd:**
-   - **slskd binaries under systemd:** run the update script from [Updating](#updating). It detects the install folder from your service and replaces only the binaries and web UI.
+   - **slskd binaries under systemd:** run the update script from [Updating](#updating). It detects the install folder from your service and replaces only the binaries and web UI. Your service keeps starting `slskd`, which becomes a link to `webseekd`; you can change `ExecStart` to `webseekd` afterwards.
    - **slskd Docker image:** build the `webseekd` image as described under [Docker](#docker). Stop the old container, then start a new one with the same volumes, ports and environment variables, but with `image: webseekd`.
-   - **slskd binaries started by hand:** stop slskd, extract the webseekd build over the old folder (delete the old `wwwroot` folder first), and start it with the same `--app-dir`.
+   - **slskd binaries started by hand:** stop slskd, extract the webseekd build over the old folder (delete the old `wwwroot` folder first), and start `webseekd` with the same `--app-dir`.
 3. **Optional:** set `remote_configuration: true` to use the Settings page, and add an `integrations.musicbrainz` or `integrations.geoip` section if the defaults don't suit you.
 4. Open the web UI and hard-refresh (Ctrl+F5). Your browser may still have the old UI cached.
 
 ### Going back to slskd
 
 1. Remove the `integrations.musicbrainz` and `integrations.geoip` sections from `slskd.yml`, if you added them. slskd ignores them at startup, but its built-in config editor refuses to save a file containing keys it doesn't recognize.
-2. Reinstall slskd: extract an slskd release over the install folder (delete `wwwroot` first), or switch the container back to the slskd image.
+2. Reinstall slskd: extract an slskd release over the install folder (delete `wwwroot` and the `webseekd` binary first), or switch the container back to the slskd image. If `slskd` in the install folder is a link to `webseekd`, delete it too.
 3. `data/releases.json` (saved releases) is only used by webseekd, so you can delete it, along with `data/geoip/`. Uploaded profile pictures in `profile/` keep working if `soulseek.picture` points at one.
 
 ## Features

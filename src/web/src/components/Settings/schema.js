@@ -658,7 +658,7 @@ const schema = [
             type: 'number',
           },
           {
-            help: 'For serving the UI under a subpath behind a reverse proxy, like /slskd.',
+            help: 'For serving the UI under a subpath behind a reverse proxy, like /webseekd.',
             key: 'web.urlBase',
             label: 'URL base',
             restart: true,

@@ -5,6 +5,8 @@
 //     █▄▄▄▄▄█▄▄█▄▄▄▄▄█▄▄█▄▄█▄▄▄▄▄█
 //   ┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ━━━━ ━  ━┉   ┉     ┉
 //   │ Copyright (c) JP Dillingham.
+//   │ Copyright (c) 2026 xctwt
+//   │ Modified: added MusicBrainz, GeoIP and interests options; renamed user-facing defaults to webseekd
 //   │
 //   │ This program is free software: you can redistribute it and/or modify
 //   │ it under the terms of the GNU Affero General Public License as published
@@ -26,6 +28,7 @@
 //   │
 //   ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌ ╌ ╌╌╌╌ ╌
 //   │ SPDX-FileCopyrightText: JP Dillingham
+//   │ SPDX-FileCopyrightText: 2026 xctwt
 //   │ SPDX-License-Identifier: AGPL-3.0-only
 //   ╰───────────────────────────────────────────╶──── ─ ─── ─  ── ──┈  ┈
 // </copyright>
@@ -1740,7 +1743,7 @@ namespace slskd
             [Argument(default, "slsk-description")]
             [EnvironmentVariable("SLSK_DESCRIPTION")]
             [Description("user description for the Soulseek network")]
-            public string Description { get; init; } = "A slskd user. https://github.com/slskd/slskd";
+            public string Description { get; init; } = $"A {Program.DisplayName} user. {Program.RepositoryUrl}";
 
             /// <summary>
             ///     Gets the file path for the user's profile picture.
@@ -2771,7 +2774,7 @@ namespace slskd
 
                     if (argsIsSet && argsListIsSet)
                     {
-                        yield return new ValidationResult($"Only one of the fields {nameof(Args)} or {nameof(Arglist)} may be specified for a single script. Specify 'args' if you intend to construct a single quoted string yourself, and specify 'args_list' if you'd like slskd to handle quoting for you.");
+                        yield return new ValidationResult($"Only one of the fields {nameof(Args)} or {nameof(Arglist)} may be specified for a single script. Specify 'args' if you intend to construct a single quoted string yourself, and specify 'args_list' if you'd like webseekd to handle quoting for you.");
                     }
                 }
             }
@@ -2920,7 +2923,7 @@ namespace slskd
                 [Argument(default, "pushbullet-prefix")]
                 [EnvironmentVariable("PUSHBULLET_NOTIFICATION_PREFIX")]
                 [Description("prefix for Pushbullet notification titles")]
-                public string NotificationPrefix { get; init; } = "From slskd:";
+                public string NotificationPrefix { get; init; } = $"From {Program.DisplayName}:";
 
                 /// <summary>
                 ///     Gets a value indicating whether a Pushbullet notification should be sent when a private message is received.

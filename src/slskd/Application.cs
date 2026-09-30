@@ -5,6 +5,8 @@
 //     █▄▄▄▄▄█▄▄█▄▄▄▄▄█▄▄█▄▄█▄▄▄▄▄█
 //   ┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ━━━━ ━  ━┉   ┉     ┉
 //   │ Copyright (c) JP Dillingham.
+//   │ Copyright (c) 2026 xctwt
+//   │ Modified: shares configured interests with the server; skips answering searches until shares are ready; checks this fork's releases for updates
 //   │
 //   │ This program is free software: you can redistribute it and/or modify
 //   │ it under the terms of the GNU Affero General Public License as published
@@ -26,6 +28,7 @@
 //   │
 //   ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌ ╌ ╌╌╌╌ ╌
 //   │ SPDX-FileCopyrightText: JP Dillingham
+//   │ SPDX-FileCopyrightText: 2026 xctwt
 //   │ SPDX-License-Identifier: AGPL-3.0-only
 //   ╰───────────────────────────────────────────╶──── ─ ─── ─  ── ──┈  ┈
 // </copyright>
@@ -320,9 +323,9 @@ namespace slskd
             try
             {
                 var latestVersion = await GitHub.GetLatestReleaseVersion(
-                    organization: Program.AppName,
-                    repository: Program.AppName,
-                    userAgent: $"{Program.AppName} v{Program.FullVersion}");
+                    organization: "xctwt",
+                    repository: Program.DisplayName,
+                    userAgent: $"{Program.DisplayName} v{Program.FullVersion}");
 
                 if (latestVersion > Version.Parse(Program.SemanticVersion))
                 {

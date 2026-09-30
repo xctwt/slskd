@@ -79,14 +79,13 @@ ENV SHELL=/usr/bin/bash \
   SLSKD_DOCKER_REVISION=$REVISION \
   SLSKD_DOCKER_BUILD_DATE=$BUILD_DATE
 
-LABEL org.opencontainers.image.title=slskd \
-  org.opencontainers.image.description="A modern client-server application for the Soulseek file sharing network" \
-  org.opencontainers.image.authors="JP Dillingham, slskd Contributors" \
-  org.opencontainers.image.vendor="slskd Project" \
-  org.opencontainers.image.licenses=AGPL-3.0 \
-  org.opencontainers.image.url=https://slskd.org \
-  org.opencontainers.image.source=https://github.com/slskd/slskd \
-  org.opencontainers.image.documentation=https://github.com/slskd/slskd \
+LABEL org.opencontainers.image.title=webseekd \
+  org.opencontainers.image.description="A web-based client for the Soulseek file sharing network. A modified version of slskd, not the original program." \
+  org.opencontainers.image.authors="xctwt; based on slskd by JP Dillingham" \
+  org.opencontainers.image.licenses=AGPL-3.0-only \
+  org.opencontainers.image.url=https://github.com/xctwt/webseekd \
+  org.opencontainers.image.source=https://github.com/xctwt/webseekd \
+  org.opencontainers.image.documentation=https://github.com/xctwt/webseekd \
   org.opencontainers.image.version=$VERSION \
   org.opencontainers.image.revision=$REVISION \
   org.opencontainers.image.created=$BUILD_DATE
@@ -195,4 +194,4 @@ SCRIPT
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/entrypoint.sh"]
-CMD ["./slskd"]
+CMD ["./webseekd"]

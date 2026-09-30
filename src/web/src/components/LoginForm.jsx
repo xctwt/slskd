@@ -118,6 +118,11 @@ const LoginForm = ({ error, loading, onLoginAttempt }) => {
             </Message>
           )}
         </Form>
+        <p className="login-notice">
+          webseekd is a modified version of slskd, not the original program. It
+          is not maintained by, endorsed by, or affiliated with the slskd
+          project or its author(s).
+        </p>
       </Grid.Column>
     </Grid>
   );
