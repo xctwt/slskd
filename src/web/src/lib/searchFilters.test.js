@@ -4,6 +4,7 @@ import {
   parseDuration,
   parseFiltersFromString,
   parseSize,
+  preferenceRank,
   serializeFilters,
 } from './searchFilters';
 
@@ -89,6 +90,45 @@ describe('countFilters', () => {
         parseFiltersFromString('a -b islossless ext:flac,mp3 maxq:0'),
       ),
     ).toBe(5);
+  });
+});
+
+describe('prefer', () => {
+  it('reads groups in order, and round trips', () => {
+    const filters = parseFiltersFromString('flac prefer:Buddies,friends');
+
+    expect(filters.prefer).toEqual(['buddies', 'friends']);
+    expect(filters.include).toEqual(['flac']);
+    expect(serializeFilters(filters)).toBe('flac prefer:buddies,friends');
+    expect(countFilters(filters)).toBe(2);
+  });
+
+  it('ranks members of earlier groups first, ignoring case', () => {
+    const prefer = ['buddies', 'friends'];
+
+    expect(preferenceRank(prefer, ['Buddies'])).toBe(0);
+    expect(preferenceRank(prefer, ['friends', 'Buddies'])).toBe(0);
+    expect(preferenceRank(prefer, ['friends'])).toBe(1);
+    expect(preferenceRank(prefer, ['other'])).toBe(2);
+    expect(preferenceRank(prefer, undefined)).toBe(2);
+    expect(preferenceRank([], ['buddies'])).toBe(0);
+  });
+
+  it('does not filter anyone out', () => {
+    const response = {
+      fileCount: 1,
+      files: [{ filename: 'a/b.flac', size: 1 }],
+      lockedFileCount: 0,
+      lockedFiles: [],
+      username: 'stranger',
+    };
+
+    expect(
+      filterResponse({
+        filters: parseFiltersFromString('prefer:buddies'),
+        response,
+      }).fileCount,
+    ).toBe(1);
   });
 });
 

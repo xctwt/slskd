@@ -16,17 +16,20 @@ import {
   getDefaultFilter,
   getResponses,
   getStatus,
+  isUnanswered,
   parseFiltersFromString,
   stop,
+  unansweredMessage,
 } from '../../lib/searches';
-import { getDirectoryContents } from '../../lib/users';
+import { getDirectoryContents, groupsByUser } from '../../lib/users';
 import { getErrorMessage } from '../../lib/util';
+import AppContext from '../AppContext';
 import SearchFilters from '../Search/Filters/SearchFilters';
 import ErrorSegment from '../Shared/ErrorSegment';
 import LoaderSegment from '../Shared/LoaderSegment';
 import CoverThumbnail from './CoverThumbnail';
 import ReleaseCandidate from './ReleaseCandidate';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import {
   Button,
@@ -186,6 +189,9 @@ const ReleaseDetail = ({ disabled, id }) => {
   const [filters, setFilters] = useState(getDefaultFilter);
   const [sort, setSort] = useState('match');
   const [displayCount, setDisplayCount] = useState(10);
+
+  const { options } = useContext(AppContext) ?? {};
+  const userGroups = useMemo(() => groupsByUser(options), [options]);
   useEffect(() => {
     let cancelled = false;
 
@@ -367,13 +373,15 @@ const ReleaseDetail = ({ disabled, id }) => {
     });
 
     return buildCandidates({
+      prefer: parsed.prefer,
       release,
       responses: merged.map((response) =>
         filterResponse({ filters: parsed, response }),
       ),
       sort,
+      userGroups,
     });
-  }, [fetchedFiles, filters, release, responses, sort]);
+  }, [fetchedFiles, filters, release, responses, sort, userGroups]);
 
   if (error) {
     return <ErrorSegment caption={getErrorMessage(error)} />;
@@ -385,6 +393,19 @@ const ReleaseDetail = ({ disabled, id }) => {
 
   const searching = search && !status?.isComplete;
   const complete = candidates.filter((candidate) => candidate.complete).length;
+
+  const summary = () => {
+    if (isUnanswered(status)) return unansweredMessage;
+
+    if (candidates.length === 0) {
+      return `No folders match this release (${responses.length} users answered).`;
+    }
+
+    const users = new Set(
+      candidates.map((candidate) => candidate.user.username),
+    );
+    return `${candidates.length} folder${candidates.length === 1 ? '' : 's'} from ${users.size} users; ${complete} complete.`;
+  };
 
   return (
     <>
@@ -438,15 +459,7 @@ const ReleaseDetail = ({ disabled, id }) => {
               value={filters}
             />
             <div className="release-candidates-summary">
-              <span>
-                {candidates.length === 0
-                  ? `No folders match this release (${responses.length} users answered).`
-                  : `${candidates.length} folder${candidates.length === 1 ? '' : 's'} from ${
-                      new Set(
-                        candidates.map((candidate) => candidate.user.username),
-                      ).size
-                    } users; ${complete} complete.`}
-              </span>
+              <span>{summary()}</span>
               <Dropdown
                 className="release-candidates-sort"
                 inline

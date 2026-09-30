@@ -3,9 +3,10 @@ import '../UserPanel/UserPanel.css';
 import { activeUserInfoKey, urlBase } from '../../config';
 import AppContext from '../AppContext';
 import PlaceholderSegment from '../Shared/PlaceholderSegment';
+import Groups, { groupsPath } from './Groups';
 import Interests, { interestsPath } from './Interests';
 import UserView from './UserView';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
   useHistory,
   useLocation,
@@ -35,12 +36,16 @@ const Users = () => {
   const location = useLocation();
   const { username: active } = useParams();
   const interestsActive = Boolean(useRouteMatch(`${urlBase}/interests`));
+  const groupsActive = Boolean(useRouteMatch(`${urlBase}/groups`));
+  const pinnedActive = interestsActive || groupsActive;
   const { state = {} } = useContext(AppContext) ?? {};
   const selfUsername = state.user?.username;
 
   const [tabs, setTabs] = useState(loadTabs);
   const [views, setViews] = useState({});
   const [input, setInput] = useState('');
+  const strip = useRef(null);
+  const [overflow, setOverflow] = useState({ left: false, right: false });
 
   // older links pass the user in location state; the last viewed user is
   // restored when landing on the page without one, including from the nav
@@ -50,7 +55,7 @@ const Users = () => {
 
     if (requested) {
       history.replace(userPath(requested));
-    } else if (!active && !interestsActive) {
+    } else if (!active && !pinnedActive) {
       const last = localStorage.getItem(activeUserInfoKey);
       const restore = tabs.includes(last) ? last : tabs[0];
 
@@ -58,7 +63,7 @@ const Users = () => {
         history.replace(userPath(restore));
       }
     }
-  }, [location.state, active, interestsActive]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [location.state, active, pinnedActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!active) {
@@ -73,6 +78,63 @@ const Users = () => {
 
   useEffect(() => {
     localStorage.setItem(tabsKey, JSON.stringify(tabs));
+  }, [tabs]);
+
+  // the open profiles scroll sideways in one row; keep the active one in view
+  useEffect(() => {
+    strip.current
+      ?.querySelector('.users-tab.active')
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [active, tabs]);
+
+  // fade whichever ends have more profiles scrolled out of view, and let a
+  // mouse wheel scroll the row, which otherwise only scrolls sideways with a
+  // trackpad or shift
+  useEffect(() => {
+    const element = strip.current;
+
+    if (!element) {
+      return undefined;
+    }
+
+    const measure = () => {
+      const { clientWidth, scrollLeft, scrollWidth } = element;
+      const left = scrollLeft > 1;
+      const right = scrollLeft + clientWidth < scrollWidth - 1;
+
+      setOverflow((previous) =>
+        previous.left === left && previous.right === right
+          ? previous
+          : { left, right },
+      );
+    };
+
+    const onWheel = (event) => {
+      if (
+        event.deltaX === 0 &&
+        event.deltaY !== 0 &&
+        element.scrollWidth > element.clientWidth
+      ) {
+        event.preventDefault();
+        element.scrollLeft += event.deltaY;
+      }
+    };
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    element.addEventListener('scroll', measure, { passive: true });
+    element.addEventListener('wheel', onWheel, { passive: false });
+    measure();
+
+    return () => {
+      observer.disconnect();
+      element.removeEventListener('scroll', measure);
+      element.removeEventListener('wheel', onWheel);
+    };
+  }, [tabs.length > 0]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    strip.current?.dispatchEvent(new Event('scroll'));
   }, [tabs]);
 
   const open = (username) => {
@@ -167,46 +229,76 @@ const Users = () => {
             Interests
           </button>
         </div>
-        {tabs.map((username) => (
-          <div
-            className={`users-tab ${username === active ? 'active' : ''}`}
-            key={username}
+        <div
+          className={`users-tab users-tab-pinned ${
+            groupsActive ? 'active' : ''
+          }`}
+        >
+          <button
+            aria-selected={groupsActive}
+            className="users-tab-name"
+            onClick={() => history.push(groupsPath())}
+            role="tab"
+            title="Your user groups, like buddies"
+            type="button"
           >
-            <button
-              aria-selected={username === active}
-              className="users-tab-name"
-              onAuxClick={(event) => event.button === 1 && close(username)}
-              onClick={() => history.push(userPath(username))}
-              role="tab"
-              title={`${username} (middle click to close)`}
-              type="button"
-            >
-              {username === selfUsername && (
-                <Icon
-                  name="id card outline"
-                  title="You"
-                />
-              )}
-              {username}
-            </button>
-            <button
-              aria-label={`Close ${username}`}
-              className="users-tab-close"
-              onClick={() => close(username)}
-              title="Close"
-              type="button"
-            >
-              <Icon name="close" />
-            </button>
+            <Icon name="users" />
+            Groups
+          </button>
+        </div>
+        {tabs.length > 0 && (
+          <div
+            className={[
+              'users-tabs-open',
+              overflow.left && 'overflow-left',
+              overflow.right && 'overflow-right',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            ref={strip}
+          >
+            {tabs.map((username) => (
+              <div
+                className={`users-tab ${username === active ? 'active' : ''}`}
+                key={username}
+              >
+                <button
+                  aria-selected={username === active}
+                  className="users-tab-name"
+                  onAuxClick={(event) => event.button === 1 && close(username)}
+                  onClick={() => history.push(userPath(username))}
+                  role="tab"
+                  title={`${username} (middle click to close)`}
+                  type="button"
+                >
+                  {username === selfUsername && (
+                    <Icon
+                      name="id card outline"
+                      title="You"
+                    />
+                  )}
+                  {username}
+                </button>
+                <button
+                  aria-label={`Close ${username}`}
+                  className="users-tab-close"
+                  onClick={() => close(username)}
+                  title="Close"
+                  type="button"
+                >
+                  <Icon name="close" />
+                </button>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
         {tabs.length > 1 && (
           <button
             className="users-tab-close-all"
             onClick={() => {
               setTabs([]);
 
-              if (!interestsActive) {
+              if (!pinnedActive) {
                 history.replace(`${urlBase}/users`);
               }
             }}
@@ -216,12 +308,12 @@ const Users = () => {
           </button>
         )}
       </div>
-      {interestsActive ? (
+      {interestsActive || groupsActive ? (
         <Segment
           className="users-user"
           raised
         >
-          <Interests />
+          {interestsActive ? <Interests /> : <Groups />}
         </Segment>
       ) : active ? (
         <Segment

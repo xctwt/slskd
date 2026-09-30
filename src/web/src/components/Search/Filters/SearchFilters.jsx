@@ -11,7 +11,9 @@ import {
   serializeFilters,
   setDefaultFilter as storeDefaultFilter,
 } from '../../../lib/searches';
-import React, { useEffect, useMemo, useState } from 'react';
+import { userGroupNames } from '../../../lib/users';
+import AppContext from '../../AppContext';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import {
   Button,
   Checkbox,
@@ -96,6 +98,10 @@ const help = (
       <li>
         <code>minfif:8</code> files per folder, <code>maxq:10</code> queue
         length, <code>minspeed:1mb</code> upload speed per second
+      </li>
+      <li>
+        <code>prefer:buddies,friends</code> puts members of your user groups
+        first, in that order
       </li>
     </ul>
   </div>
@@ -187,6 +193,9 @@ const SearchFilters = ({ onChange, value }) => {
   const [defaultFilter, setDefaultFilter] = useState(getDefaultFilter);
 
   const filters = useMemo(() => parseFiltersFromString(value), [value]);
+
+  const { options: appOptions } = useContext(AppContext) ?? {};
+  const groupNames = useMemo(() => userGroupNames(appOptions), [appOptions]);
   const count = countFilters(filters);
 
   const toggle = () => {
@@ -445,6 +454,27 @@ const SearchFilters = ({ onChange, value }) => {
                 label: 'Min upload speed (KB/s)',
                 placeholder: 'Any',
               })}
+              <Form.Dropdown
+                fluid
+                label="Prefer groups"
+                multiple
+                noResultsMessage="Create user groups in Settings"
+                onChange={(_event, { value: selected }) =>
+                  update({ prefer: selected })
+                }
+                // groups named in the filter text are kept even if they no longer exist
+                options={[
+                  ...new Set([
+                    ...groupNames.map((name) => name.toLowerCase()),
+                    ...filters.prefer,
+                  ]),
+                ].map((name) => choice(name, name))}
+                placeholder="None"
+                search
+                selection
+                title="Members of these groups go first, in the order picked"
+                value={filters.prefer}
+              />
             </div>
             <div className="search-filters-section">Words in the file path</div>
             <div className="search-filters-grid search-filters-grid-wide">

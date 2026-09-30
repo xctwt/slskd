@@ -74,6 +74,17 @@ const CandidateSummary = ({ candidate }) => {
             }
           />
           <UserLink username={user.username} />
+          {user.groups.map((group) => (
+            <Label
+              className="user-group-label"
+              color="teal"
+              key={group}
+              size="mini"
+              title={`In your "${group}" user group`}
+            >
+              {group}
+            </Label>
+          ))}
         </span>
         <span className="release-candidate-meta">
           {formatBytes(candidate.size)} · {formatSpeed(user.uploadSpeed)} ·

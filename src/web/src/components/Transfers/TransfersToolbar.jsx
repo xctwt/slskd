@@ -2,8 +2,10 @@ import { sortOptions, tabs } from '../../lib/transferView';
 import React from 'react';
 import { Button, Dropdown } from 'semantic-ui-react';
 
-// tabs that filter transfers by state, and controls for ordering users
+// tabs that filter transfers by state, the bulk actions, and controls for
+// ordering users
 const TransfersToolbar = ({
+  actions,
   allExpanded,
   counts,
   onSortChange,
@@ -32,39 +34,43 @@ const TransfersToolbar = ({
         </button>
       ))}
     </div>
-    <div className="transfers-sort">
-      <Dropdown
-        aria-label="Sort by"
-        inline
-        onChange={(_event, { value }) => onSortChange({ sortBy: value })}
-        options={sortOptions.map(({ key, label }) => ({
-          key,
-          text: label,
-          value: key,
-        }))}
-        value={view.sortBy}
-      />
-      <Button
-        aria-label={view.descending ? 'Descending' : 'Ascending'}
-        basic
-        compact
-        icon={view.descending ? 'sort amount down' : 'sort amount up'}
-        onClick={() => onSortChange({ descending: !view.descending })}
-        size="small"
-        title={
-          view.descending
-            ? 'Descending (click for ascending)'
-            : 'Ascending (click for descending)'
-        }
-      />
-      <Button
-        basic
-        compact
-        content={allExpanded ? 'Collapse all' : 'Expand all'}
-        icon={allExpanded ? 'compress' : 'expand'}
-        onClick={onToggleExpanded}
-        size="small"
-      />
+    <div className="transfers-controls">
+      {actions}
+      <div className="transfers-sort">
+        <Dropdown
+          aria-label="Sort by"
+          inline
+          onChange={(_event, { value }) => onSortChange({ sortBy: value })}
+          options={sortOptions.map(({ key, label }) => ({
+            key,
+            text: label,
+            value: key,
+          }))}
+          value={view.sortBy}
+        />
+        <Button
+          aria-label={view.descending ? 'Descending' : 'Ascending'}
+          basic
+          compact
+          icon={view.descending ? 'sort amount down' : 'sort amount up'}
+          onClick={() => onSortChange({ descending: !view.descending })}
+          size="small"
+          title={
+            view.descending
+              ? 'Descending (click for ascending)'
+              : 'Ascending (click for descending)'
+          }
+        />
+        <Button
+          aria-label={allExpanded ? 'Collapse all' : 'Expand all'}
+          basic
+          compact
+          icon={allExpanded ? 'compress' : 'expand'}
+          onClick={onToggleExpanded}
+          size="small"
+          title={allExpanded ? 'Collapse all' : 'Expand all'}
+        />
+      </div>
     </div>
   </div>
 );

@@ -54,24 +54,110 @@
 /* open user tabs */
 .users-tabs {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35em;
+  align-items: flex-end;
+  gap: 0.25em;
   margin-top: 15px;
+  border-bottom: var(--smui-segment-border, 1px solid rgba(34, 36, 38, 0.15));
 }
 
+/* the pinned interests and groups are folder tabs on the panel below: they stand
+   on the strip's bottom line instead of drawing their own, since the translucent
+   borders would add up where they overlap, and the active one covers the line
+   between its sides and takes the panel's background so it joins the panel. open
+   profiles are pills beside them */
 .users-tab {
   display: flex;
   align-items: center;
-  border: 1px solid var(--slskd-tertiary-border-color, rgba(34, 36, 38, 0.15));
-  border-radius: 999px;
-  background: var(--slskd-secondary-background, #fff);
   color: var(--slskd-color, rgba(0, 0, 0, 0.87));
 }
 
-.users-tab.active {
+.users-tab-pinned {
+  position: relative;
+  flex-shrink: 0;
+  border: var(--smui-segment-border, 1px solid rgba(34, 36, 38, 0.15));
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  background: var(--slskd-secondary-background, #f3f4f5);
+  opacity: 0.8;
+}
+
+.users-tab-pinned:hover {
+  opacity: 1;
+}
+
+.users-tab-pinned.active {
+  background: var(--smui-segment-background, #fff);
+  opacity: 1;
+}
+
+.users-tab-pinned.active::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: var(--smui-segment-background, #fff);
+}
+
+.users-tab:not(.users-tab-pinned) {
+  align-self: center;
+  border: 1px solid var(--slskd-tertiary-border-color, rgba(34, 36, 38, 0.15));
+  border-radius: 999px;
+  background: var(--slskd-secondary-background, #fff);
+}
+
+/* open profiles stay on one row and scroll sideways instead of wrapping; the
+   scrollbar is hidden, since it would cover the pills, while the fades show
+   there's more, the wheel scrolls the row and the active pill is kept in view */
+.users-tabs-open {
+  display: flex;
+  align-items: center;
+  gap: 0.25em;
+  flex: 0 1 auto;
+  min-width: 0;
+  align-self: center;
+  padding: 2px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.users-tabs-open::-webkit-scrollbar {
+  display: none;
+}
+
+.users-tabs-open .users-tab {
+  flex-shrink: 0;
+}
+
+.users-tabs-open.overflow-left {
+  mask-image: linear-gradient(to right, transparent, #000 2.5em);
+}
+
+.users-tabs-open.overflow-right {
+  mask-image: linear-gradient(to left, transparent, #000 2.5em);
+}
+
+.users-tabs-open.overflow-left.overflow-right {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 2.5em,
+    #000 calc(100% - 2.5em),
+    transparent
+  );
+}
+
+.users-tab:not(.users-tab-pinned).active {
   border-color: var(--smui-site-link-color, #2185d0);
   box-shadow: inset 0 0 0 1px var(--smui-site-link-color, #2185d0);
+}
+
+.users-tabs + .ui.segment.users-user {
+  margin-top: 0 !important;
+  border-top: none;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 .users-tab button {
@@ -90,8 +176,15 @@
   white-space: nowrap;
 }
 
-.users-tab.active .users-tab-name {
-  font-weight: 700;
+.users-tab-pinned .users-tab-name {
+  padding: 0.5em 0.8em;
+}
+
+/* semantic's fixed icon width is narrower than the users glyph, which then
+   touches its label */
+.users-tab-pinned .users-tab-name > .icon {
+  width: auto;
+  margin: 0 0.4em 0 0;
 }
 
 .users-tab-close {
@@ -107,8 +200,12 @@
 .users-tab button:focus-visible,
 .users-tab-close-all:focus-visible {
   outline: 2px solid var(--smui-site-link-color, #2185d0);
-  outline-offset: 1px;
+  outline-offset: -2px;
   border-radius: 999px;
+}
+
+.users-tab-pinned button:focus-visible {
+  border-radius: 4px 4px 0 0;
 }
 
 .users-tab-close-all {
@@ -118,8 +215,11 @@
   font: inherit;
   cursor: pointer;
   opacity: 0.6;
+  flex-shrink: 0;
   padding: 0.4em 0.6em;
+  align-self: center;
   text-decoration: underline;
+  white-space: nowrap;
 }
 
 .users-user-header {
@@ -136,9 +236,6 @@
 }
 
 /* interests tab */
-.users-tab-pinned .users-tab-name {
-  padding-right: 0.9em;
-}
 
 .interests-search {
   display: flex;

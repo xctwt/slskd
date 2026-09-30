@@ -169,6 +169,17 @@ class Response extends Component {
               name="circle"
             />
             <UserLink username={response.username} />
+            {this.props.groups?.map((group) => (
+              <Label
+                className="user-group-label"
+                color="teal"
+                key={group}
+                size="mini"
+                title={`In your "${group}" user group`}
+              >
+                {group}
+              </Label>
+            ))}
             <Icon
               className="close-button"
               color="red"

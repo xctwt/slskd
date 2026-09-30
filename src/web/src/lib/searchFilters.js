@@ -104,6 +104,7 @@ export const emptyFilters = () => ({
   isLossless: false,
   isLossy: false,
   isVBR: false,
+  prefer: [],
   ...Object.fromEntries(
     Object.keys(valueFilters).map((key) => [
       key,
@@ -117,6 +118,12 @@ const valueFilterByAlias = Object.fromEntries(
     aliases.map((alias) => [alias, key]),
   ),
 );
+
+const splitList = (value) =>
+  value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
 
 const splitExtensions = (value) =>
   value
@@ -136,6 +143,8 @@ export const parseFiltersFromString = (string = '') => {
 
       if (name === 'ext') {
         filters.extensions.push(...splitExtensions(value));
+      } else if (name === 'prefer') {
+        filters.prefer.push(...splitList(value));
       } else if (valueFilterByAlias[name]) {
         const key = valueFilterByAlias[name];
         const parsed = valueFilters[key].parse(value);
@@ -153,6 +162,7 @@ export const parseFiltersFromString = (string = '') => {
   }
 
   filters.extensions = [...new Set(filters.extensions)];
+  filters.prefer = [...new Set(filters.prefer)];
   return filters;
 };
 
@@ -171,6 +181,10 @@ export const serializeFilters = (filters = {}) => {
     tokens.push(`ext:${filters.extensions.join(',')}`);
   }
 
+  if (filters.prefer?.length) {
+    tokens.push(`prefer:${filters.prefer.join(',')}`);
+  }
+
   for (const [key, { aliases, format = String }] of Object.entries(
     valueFilters,
   )) {
@@ -187,6 +201,7 @@ export const countFilters = (filters = {}) =>
   (filters.include?.length ?? 0) +
   (filters.exclude?.length ?? 0) +
   (filters.extensions?.length ? 1 : 0) +
+  (filters.prefer?.length ? 1 : 0) +
   Object.values(flagFilters).filter((key) => filters[key]).length +
   Object.keys(valueFilters).filter((key) => isSet(key, filters[key])).length;
 
@@ -381,4 +396,13 @@ export const setDefaultFilter = (filters) => {
   } else {
     localStorage.removeItem(defaultFilterKey);
   }
+};
+
+// how early a user goes with `prefer:` in effect: 0 for a member of the first group
+// listed, 1 for the second, and so on; users in none of them come after everyone who is.
+// groups are matched ignoring case, since the filter text is lowercased
+export const preferenceRank = (prefer = [], groups = []) => {
+  const lowered = new Set(groups.map((group) => group.toLowerCase()));
+  const index = prefer.findIndex((group) => lowered.has(group.toLowerCase()));
+  return index === -1 ? prefer.length : index;
 };
