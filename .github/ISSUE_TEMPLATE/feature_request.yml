@@ -1,5 +1,5 @@
 name: Feature Request
-description: Suggest a feature for slskd
+description: Suggest a feature for webseekd
 labels: ['needs triage']
 body:
 - type: checkboxes
